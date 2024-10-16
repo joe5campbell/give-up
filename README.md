@@ -1,14 +1,10 @@
 <div align="center">
-  <h2 style="display:flex;justify-content:center;color:white;">
+  <h2 style="color: white; text-align: center;">
+    <strong>Give Up - If you're not going to quit, at least make it worthwhile!</strong>
   </h2>
-  <strong>## Give Up - If you're not going to quit, at least make it worth while!</strong>
-  <br />
-  <div style="margin-top:20px;margin-bottom:20px;">
-  </div>
-  Give Up is designed to make you quit by finally giving you a reason not to bite your nails, smoke that cigarette or stay up all night! Every time you log a broken habit, you'll make an incredibly kind donation to a charity of your choice. Doesn't sound too bad right? Well think of how many times you've broken that habit in the last day, week or month and think about how much money you would be down at the end of it! If that isn't incentive then I don't know what is...
-  <br />
-  <div style="margin-top:20px;margin-bottom:20px;">
-  </div>
+  <p style="margin: 20px 0; text-align: center;">
+    Give Up is designed to make you quit by finally giving you a reason not to bite your nails, smoke that cigarette or stay up all night! Every time you log a broken habit, you'll make an incredibly kind donation to a charity of your choice. Doesn't sound too bad, right? But think about how often you’ve broken that habit in the last day, week, or month. Imagine how much money you could be down by the end of it! If that isn't incentive, then I don't know what is...
+  </p>
 </div>
 
 ---
