@@ -1,21 +1,13 @@
 <div align="center">
   <h2 style="display:flex;justify-content:center;color:white;">
-    <img src="./assets/images/logo.png" alt="Ignite Logo" />
   </h2>
-  <strong>Tiny changes, remarkable results</strong>
+  <strong>Give Up - If you're not going to quit, at least make it worth while!</strong>
   <br />
   <div style="margin-top:20px;margin-bottom:20px;">
-    <img src="./assets/images/habit-tracker.gif" width="300px"  />
   </div>
 </div>
 
 ---
-
-```bash
-If you like this project, please leave a star ⭐ It's free and helps a lot!
-```
-
-<!-- ![og-dark](https://user-images.githubusercontent.com/79809121/224662523-1206dd14-bcde-45d4-973d-7b4718a251ed.png) -->
 
 ## Prerequisites
 
@@ -29,9 +21,9 @@ To install the application:
 
 ```shell
 # clone the repo
-git clone https://github.com/takanome-dev/habit-tracker-app.git
+git clone https://github.com/joe5campbell/give-up
 # cd into the repo
-cd habit-tracker-app
+cd give-up
 # install dependencies
 yarn install
 ```
