@@ -57,8 +57,8 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
       <BottomSheetModalProvider>
         {/* Header with Avatar and Plus Icon */}
         <View style={$headerContainer}>
-          <View style={$imageContainer}>
-            <Image source={require("../../assets/images/avatar-2.png")} style={$image} />
+          <View style={$logoContainer}>
+            <Image source={require("../../assets/images/Just Give Up Circle Logo.png")} style={$logo} />
             <Text text="Today" size="xl" weight="bold" />
           </View>
           <View style={$headerBtn}>
@@ -83,13 +83,25 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           <View style={$addHabitContainer}>
             <Text style={{ marginBottom: spacing.lg }} size="lg" weight="bold">No habit set</Text>
             <TouchableOpacity onPress={() => navigation.navigate("CreateHabit")} style={$addHabitButton}>
-            <Text text="Add New Habit" size="lg" weight="bold" style={$buttonText} />
+              <Text text="Add New Habit" size="lg" weight="bold" style={$buttonText} />
             </TouchableOpacity>
           </View>
         ) : (
           <View>
             {/* Slip-up Counter */}
-            <View style={$centerContainer}>
+            <View style={$trackerContainer}>
+              {/* Trash icon to remove habit */}
+              <TouchableOpacity onPress={() => {
+                habitStore.clearHabit()
+                setSlipUps(0)
+              }} style={$trashIconContainer}>
+                <MaterialCommunityIcons
+                  name="trash-can-outline"
+                  color={colors.error}
+                  size={24}
+                />
+              </TouchableOpacity>
+
               <Text text={`${habitName} Tracker`} size="lg" weight="bold" />
               <AnimatedCircularProgress
                 size={200}
@@ -115,18 +127,6 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
                 <Text text={`Count ${habitName}`} size="lg" weight="bold" style={$buttonText} />
               </TouchableOpacity>
             </View>
-            {/* Remove Habit Button */}
-            <View style={$removeHabitButtonContainer}>
-              <TouchableOpacity
-                onPress={() => {
-                  habitStore.clearHabit() // Clear the habit from the store
-                  setSlipUps(0) // Reset slip-ups
-                }}
-                style={$removeHabitButton}
-              >
-                <Text text="Remove Habit" size="lg" weight="bold" style={$buttonText} />
-              </TouchableOpacity>
-            </View>
           </View>
         )}
       </BottomSheetModalProvider>
@@ -147,10 +147,16 @@ const $headerContainer: ViewStyle = {
   alignItems: "center",
 }
 
-const $imageContainer: ViewStyle = {
+const $logoContainer: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
   gap: spacing.md,
+}
+
+const $logo: ImageStyle = {
+  width: 50,
+  height: 50,
+  resizeMode: "contain",
 }
 
 const $headerBtn: ViewStyle = {
@@ -173,10 +179,18 @@ const $topContainer: ViewStyle = {
   marginTop: spacing.lg,
 }
 
-const $centerContainer: ViewStyle = {
+const $trackerContainer: ViewStyle = {
   justifyContent: "center",
   alignItems: "center",
   marginVertical: spacing.xl,
+  position: "relative", // To allow absolute positioning of the trash icon
+}
+
+const $trashIconContainer: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  right: 0,
+  padding: spacing.sm,
 }
 
 const $circularProgress: ViewStyle = {
@@ -200,19 +214,6 @@ const $slipUpButton: ViewStyle = {
   borderRadius: spacing.sm,
 }
 
-const $removeHabitButtonContainer: ViewStyle = {
-  marginTop: spacing.md,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $removeHabitButton: ViewStyle = {
-  backgroundColor: colors.error,
-  paddingVertical: spacing.md,
-  paddingHorizontal: spacing.xxl,
-  borderRadius: spacing.sm,
-}
-
 const $addHabitContainer: ViewStyle = {
   justifyContent: "center",
   alignItems: "center",
@@ -229,3 +230,4 @@ const $addHabitButton: ViewStyle = {
 const $buttonText: TextStyle = {
   color: colors.palette.neutral100,
 }
+
