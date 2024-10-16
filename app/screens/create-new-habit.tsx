@@ -109,6 +109,17 @@ export const CreateNewHabitScreen: FC<CreateNewHabitScreenProps> = observer(
       setFrequency(newFrequency)
     }
 
+    // Add state to control visibility of time picker
+    const [isTimePickerVisible, setIsTimePickerVisible] = React.useState(false);
+
+    // Function to handle the time selection and hide the picker
+    const handleTimeChange = (_, selectedDate) => {
+      if (selectedDate) {
+        setHabitTime(new Date(selectedDate)); // Set the selected time
+      }
+      setIsTimePickerVisible(false);  // Hide the picker after selection
+    };
+
     return (
       <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
         <BottomSheetModalProvider>
@@ -194,17 +205,24 @@ export const CreateNewHabitScreen: FC<CreateNewHabitScreenProps> = observer(
               <Text preset="formLabel" text="Habit time" style={$labelStyle} />
               <Text text="*" style={$labelRequired} />
             </View>
-            <DateTimePicker
-              testID="dateTimePicker"
-              style={$dateTimePicker}
-              value={habitTime}
-              mode="time"
-              is24Hour={false}
-              locale="en-US"
-              accentColor={colors.palette.neutral100}
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              onChange={(_, selectedDate) => setHabitTime(new Date(selectedDate!))}
-            />
+            
+            {/* Button to trigger time picker */}
+            <Button onPress={() => setIsTimePickerVisible(true)}>
+              <Text text="Pick a time" />
+            </Button>
+            
+            {/* Only show the DateTimePicker when it's triggered */}
+            {isTimePickerVisible && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                style={$dateTimePicker}
+                value={habitTime}
+                mode="time"
+                is24Hour={false}
+                locale="en-US"
+                onChange={handleTimeChange} // Update time and hide picker
+              />
+            )}
           </View>
           <View style={$gap}>
             <View style={$remindersContainer}>
