@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextStyle,
   ScrollView,
+  Alert,
 } from "react-native"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import { AnimatedCircularProgress } from "react-native-circular-progress"
@@ -16,6 +17,7 @@ import { colors, spacing } from "../theme"
 import { habitStore } from "app/store/habit-store"
 import { DayCard } from "../components/day-card"
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
+
 
 interface HomeScreenProps {
   navigation: any
@@ -34,6 +36,31 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
     // Reset slip-ups counter for the next day
     setSlipUps(0)
+  }
+  
+  // Function to handle the garbage can click with streak confirmation
+  const handleDeleteHabit = () => {
+    if (habitStore.dayStreak.length > 0) {
+      Alert.alert(
+        "Reset Streak?",
+        "You have an existing streak. Do you want to reset it as well?",
+        [
+          { text: "No", onPress: () => clearHabit(false) },  // Do not reset streak
+          { text: "Yes", onPress: () => clearHabit(true) },   // Reset streak
+        ]
+      )
+    } else {
+      clearHabit(false)  // No streak, just clear the habit
+    }
+  }
+
+  // Function to clear the habit and reset the streak if confirmed
+  const clearHabit = (resetStreak: boolean) => {
+    if (resetStreak) {
+      habitStore.clearStreaks()  // Clear streaks if needed
+    }
+    habitStore.clearHabit()  // Clear the habit
+    setSlipUps(0)  // Reset slip-ups
   }
 
   const fillPercentage = slipUps < habitStore.maxSlipUps ? ((habitStore.maxSlipUps - slipUps) / habitStore.maxSlipUps) * 100 : 0
@@ -95,10 +122,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               <View style={$headerRow}>
                 <Text text={`${habitName} Tracker`} size="lg" weight="bold" style={$centeredHabitName} />
                 <TouchableOpacity
-                  onPress={() => {
-                    habitStore.clearHabit()  // Clear the habit when clicked
-                    setSlipUps(0)  // Reset slip-ups
-                  }}
+                  onPress={handleDeleteHabit}
                   style={$garbageIcon}
                 >
                   <MaterialCommunityIcons

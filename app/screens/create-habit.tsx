@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { View, TextInput, ViewStyle, TextStyle } from "react-native"
+import { View, TextInput, ViewStyle, TextStyle, Alert } from "react-native"
 import { Text, Button, Screen } from "app/components"
 import { colors, spacing } from "../theme"
 import { HomeStackScreenProps } from "../navigators/types"
@@ -10,15 +10,42 @@ export const CreateHabitScreen = ({ navigation }: HomeStackScreenProps<"CreateHa
   const [description, setDescription] = useState("")
   const [maxSlipUps, setMaxSlipUps] = useState("")  // New state for max slip-ups
 
+  // Function to handle the habit creation process
   const handleCreateHabit = () => {
+    if (habitStore.dayStreak.length > 0) {
+      // Show confirmation pop-up if streaks exist
+      showStreakResetConfirmation()
+    } else {
+      // No streaks, save habit directly
+      saveHabit(false)
+    }
+  }
+
+  // Function to save the habit and reset streaks if required
+  const saveHabit = (resetStreak: boolean) => {
     if (habitName.trim() && maxSlipUps.trim()) {
       habitStore.setHabitName(habitName)
       habitStore.setDescription(description)
       habitStore.setMaxSlipUps(parseInt(maxSlipUps))  // Store max slip-ups
-      navigation.navigate("Home")  // No need to pass params anymore
+      if (resetStreak) {
+        habitStore.clearStreaks()  // Clear streaks if reset is confirmed
+      }
+      navigation.navigate("Home")  // Navigate back to Home
     } else {
       alert("Please enter both a habit name and maximum slip-ups per day.")
     }
+  }
+
+  // Function to show confirmation dialog for resetting streaks
+  const showStreakResetConfirmation = () => {
+    Alert.alert(
+      "Reset Streak?",
+      "You have an existing streak. Do you want to reset it as well?",
+      [
+        { text: "No", onPress: () => saveHabit(false) },  // Don't reset streak
+        { text: "Yes", onPress: () => saveHabit(true) },  // Reset streak
+      ]
+    )
   }
 
   return (
@@ -58,7 +85,7 @@ export const CreateHabitScreen = ({ navigation }: HomeStackScreenProps<"CreateHa
         text="Create Habit"
         style={$button}
         textStyle={$buttonText}
-        onPress={handleCreateHabit}
+        onPress={handleCreateHabit}  // Handle the creation process
       />
     </Screen>
   )

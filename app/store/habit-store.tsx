@@ -31,10 +31,11 @@ class HabitStore {
 
   resetDailySlipUps(slipUps: number) {
     if (slipUps === 0) {
-      this.superStreak += 1  // Increment super streak when no slip-ups
-    }
-    if (slipUps <= this.maxSlipUps) {
+      this.streak += 1  // Increment streak as there are no slip-ups
+      this.superStreak += 1  // Increment super streak too! 
+    } else if (slipUps <= this.maxSlipUps) {  // <-- Changed `elif` to `else if`
       this.streak += 1  // Increment streak if within limit
+      this.superStreak = 0 // Reset super streak 
     } else {
       this.streak = 0  // Reset streak if limit exceeded
       this.superStreak = 0 // Reset super streak as well
@@ -47,14 +48,17 @@ class HabitStore {
     })
   }
 
+  clearStreaks() {
+    this.streak = 0
+    this.superStreak = 0
+    this.dayStreak = []  // Clear the stored streak circles
+  }
+
   clearHabit() {
     this.habitName = ""
     this.description = ""
     this.maxSlipUps = 0
-    this.streak = 0
-    this.superStreak = 0
     this.slipUpsToday = 0
-    this.dayStreak = []  // Clear the streak data when habit is cleared
   }
 }
 
