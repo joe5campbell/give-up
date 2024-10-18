@@ -8,14 +8,16 @@ import { habitStore } from "app/store/habit-store"
 export const CreateHabitScreen = ({ navigation }: HomeStackScreenProps<"CreateHabit">) => {
   const [habitName, setHabitName] = useState("")
   const [description, setDescription] = useState("")
+  const [maxSlipUps, setMaxSlipUps] = useState("")  // New state for max slip-ups
 
   const handleCreateHabit = () => {
-    if (habitName.trim()) {
+    if (habitName.trim() && maxSlipUps.trim()) {
       habitStore.setHabitName(habitName)
       habitStore.setDescription(description)
+      habitStore.setMaxSlipUps(parseInt(maxSlipUps))  // Store max slip-ups
       navigation.navigate("Home")  // No need to pass params anymore
     } else {
-      alert("Please enter a habit name.")
+      alert("Please enter both a habit name and maximum slip-ups per day.")
     }
   }
 
@@ -39,6 +41,16 @@ export const CreateHabitScreen = ({ navigation }: HomeStackScreenProps<"CreateHa
           value={description}
           onChangeText={setDescription}
           placeholder="Optional habit details"
+          style={$inputStyle}
+        />
+      </View>
+      <View style={$inputContainer}>
+        <Text text="Max Slip-Ups Per Day" preset="formLabel" style={$labelStyle} />
+        <TextInput
+          value={maxSlipUps}
+          onChangeText={setMaxSlipUps}
+          keyboardType="numeric"
+          placeholder="Enter max slip-ups"
           style={$inputStyle}
         />
       </View>

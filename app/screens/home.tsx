@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useState } from "react"
+import React, { FC, useState, useEffect } from "react"
 import {
   View,
   Image,
@@ -14,10 +14,7 @@ import { Text, Screen } from "app/components"
 import { colors, spacing } from "../theme"
 import { DayCard } from "../components/day-card"
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
-import { habitStore } from "app/store/habit-store"  // Import the habit store
-
-// Number of allowed slip-ups per day
-const MAX_SLIPUPS = 10
+import { habitStore } from "app/store/habit-store"
 
 // Sample weekly progress data
 const weeklyProgress = [
@@ -35,30 +32,38 @@ interface HomeScreenProps {
 }
 
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
-  // Track the number of slip-ups
   const [slipUps, setSlipUps] = useState(0)
 
+  const maxSlipUps = habitStore.maxSlipUps
+
+  useEffect(() => {
+    // Function to reset slip-ups and update streaks each day
+    const resetDailyCounters = () => {
+      habitStore.resetDailySlipUps(slipUps)
+      setSlipUps(0)
+    }
+
+    // For simplicity, you can add logic here to reset daily at midnight using background tasks
+    // resetDailyCounters() // For now, this could be called manually for testing
+  }, [slipUps])
+
   const increaseSlipUps = () => {
-    // Keep incrementing slip-ups even after reaching MAX_SLIPUPS
     setSlipUps(slipUps + 1)
   }
 
-  // Calculate the percentage for the circular progress.
-  // Once it exceeds the maximum slip-ups, the circle will remain full.
-  const fillPercentage = slipUps < MAX_SLIPUPS 
-    ? ((MAX_SLIPUPS - slipUps) / MAX_SLIPUPS) * 100 
+  const fillPercentage = slipUps < maxSlipUps
+    ? ((maxSlipUps - slipUps) / maxSlipUps) * 100
     : 0
 
-  // Get habit data from the store
   const habitName = habitStore.habitName
 
   return (
     <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <BottomSheetModalProvider>
-        {/* Header with Avatar and Plus Icon */}
+        {/* Header */}
         <View style={$headerContainer}>
-          <View style={$logoContainer}>
-            <Image source={require("../../assets/images/Just Give Up Circle Logo.png")} style={$logo} />
+          <View style={$imageContainer}>
+            <Image source={require("../../assets/images/avatar-2.png")} style={$image} />
             <Text text="Today" size="xl" weight="bold" />
           </View>
           <View style={$headerBtn}>
@@ -78,7 +83,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           ))}
         </View>
 
-        {/* Conditionally Render Habit Info or Add New Habit */}
+        {/* Habit Info or Add New Habit */}
         {!habitName ? (
           <View style={$addHabitContainer}>
             <Text style={{ marginBottom: spacing.lg }} size="lg" weight="bold">No habit set</Text>
@@ -88,20 +93,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           </View>
         ) : (
           <View>
-            {/* Slip-up Counter */}
-            <View style={$trackerContainer}>
-              {/* Trash icon to remove habit */}
-              <TouchableOpacity onPress={() => {
-                habitStore.clearHabit()
-                setSlipUps(0)
-              }} style={$trashIconContainer}>
-                <MaterialCommunityIcons
-                  name="trash-can-outline"
-                  color={colors.error}
-                  size={24}
-                />
-              </TouchableOpacity>
-
+            <View style={$centerContainer}>
               <Text text={`${habitName} Tracker`} size="lg" weight="bold" />
               <AnimatedCircularProgress
                 size={200}
@@ -114,7 +106,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               >
                 {() => (
                   <View style={$circularContent}>
-                    <Text text={`${slipUps}/${MAX_SLIPUPS}`} size="xl" />
+                    <Text text={`${slipUps}/${maxSlipUps}`} size="xl" />
                     <Text text="Slip-ups" size="sm" />
                   </View>
                 )}
@@ -127,6 +119,17 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
                 <Text text={`Count ${habitName}`} size="lg" weight="bold" style={$buttonText} />
               </TouchableOpacity>
             </View>
+
+            {/* Garbage Icon to remove the habit */}
+            <TouchableOpacity
+              onPress={() => {
+                habitStore.clearHabit()
+                setSlipUps(0)
+              }}
+              style={$removeHabitIcon}
+            >
+              <MaterialCommunityIcons name="trash-can" color={colors.error} size={28} />
+            </TouchableOpacity>
           </View>
         )}
       </BottomSheetModalProvider>
@@ -147,16 +150,10 @@ const $headerContainer: ViewStyle = {
   alignItems: "center",
 }
 
-const $logoContainer: ViewStyle = {
+const $imageContainer: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
   gap: spacing.md,
-}
-
-const $logo: ImageStyle = {
-  width: 50,
-  height: 50,
-  resizeMode: "contain",
 }
 
 const $headerBtn: ViewStyle = {
@@ -179,18 +176,10 @@ const $topContainer: ViewStyle = {
   marginTop: spacing.lg,
 }
 
-const $trackerContainer: ViewStyle = {
+const $centerContainer: ViewStyle = {
   justifyContent: "center",
   alignItems: "center",
   marginVertical: spacing.xl,
-  position: "relative", // To allow absolute positioning of the trash icon
-}
-
-const $trashIconContainer: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  right: 0,
-  padding: spacing.sm,
 }
 
 const $circularProgress: ViewStyle = {
@@ -214,6 +203,12 @@ const $slipUpButton: ViewStyle = {
   borderRadius: spacing.sm,
 }
 
+const $removeHabitIcon: ViewStyle = {
+  position: "absolute",
+  top: spacing.md,
+  right: spacing.lg,
+}
+
 const $addHabitContainer: ViewStyle = {
   justifyContent: "center",
   alignItems: "center",
@@ -230,4 +225,5 @@ const $addHabitButton: ViewStyle = {
 const $buttonText: TextStyle = {
   color: colors.palette.neutral100,
 }
+
 
