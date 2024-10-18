@@ -63,7 +63,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
         {/* Header */}
         <View style={$headerContainer}>
           <View style={$imageContainer}>
-            <Image source={require("../../assets/images/avatar-2.png")} style={$image} />
+            <Image source={require("../../assets/images/Just Give Up Circle Logo.png")} style={$image} />
             <Text text="Today" size="xl" weight="bold" />
           </View>
           <View style={$headerBtn}>
