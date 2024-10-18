@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useState, useEffect } from "react"
+import React, { FC, useState } from "react"
 import {
   View,
   Image,
@@ -7,25 +7,18 @@ import {
   ViewStyle,
   TouchableOpacity,
   TextStyle,
+  ScrollView,
 } from "react-native"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import { AnimatedCircularProgress } from "react-native-circular-progress"
 import { Text, Screen } from "app/components"
 import { colors, spacing } from "../theme"
+import { habitStore } from "app/store/habit-store"
 import { DayCard } from "../components/day-card"
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
-import { habitStore } from "app/store/habit-store"
 
-// Sample weekly progress data
-const weeklyProgress = [
-  { day: "Mon", date: "1", progress: 50 },
-  { day: "Tue", date: "2", progress: 75 },
-  { day: "Wed", date: "3", progress: 25 },
-  { day: "Thu", date: "4", progress: 100 },
-  { day: "Fri", date: "5", progress: 60 },
-  { day: "Sat", date: "6", progress: 80 },
-  { day: "Sun", date: "7", progress: 90 },
-]
+// Number of allowed slip-ups per day
+const MAX_SLIPUPS = habitStore.maxSlipUps
 
 interface HomeScreenProps {
   navigation: any
@@ -34,33 +27,29 @@ interface HomeScreenProps {
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
   const [slipUps, setSlipUps] = useState(0)
 
-  const maxSlipUps = habitStore.maxSlipUps
-
-  useEffect(() => {
-    // Function to reset slip-ups and update streaks each day
-    const resetDailyCounters = () => {
-      habitStore.resetDailySlipUps(slipUps)
-      setSlipUps(0)
-    }
-
-    // For simplicity, you can add logic here to reset daily at midnight using background tasks
-    // resetDailyCounters() // For now, this could be called manually for testing
-  }, [slipUps])
-
   const increaseSlipUps = () => {
     setSlipUps(slipUps + 1)
   }
 
-  const fillPercentage = slipUps < maxSlipUps
-    ? ((maxSlipUps - slipUps) / maxSlipUps) * 100
-    : 0
+  const addCurrentDayToStreak = () => {
+    // Update streaks in the store based on the number of slip-ups
+    habitStore.resetDailySlipUps(slipUps)
+
+    // Reset slip-ups counter for the next day
+    setSlipUps(0)
+  }
+
+  const fillPercentage = slipUps < MAX_SLIPUPS ? ((MAX_SLIPUPS - slipUps) / MAX_SLIPUPS) * 100 : 0
 
   const habitName = habitStore.habitName
+  const streakDisplay = habitStore.superStreak > 0
+    ? `Super Streak: ${habitStore.superStreak} days`
+    : `Current Streak: ${habitStore.streak} days`
 
   return (
     <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <BottomSheetModalProvider>
-        {/* Header */}
+        {/* Header with Avatar and Plus Icon */}
         <View style={$headerContainer}>
           <View style={$imageContainer}>
             <Image source={require("../../assets/images/Just Give Up Circle Logo.png")} style={$image} />
@@ -76,14 +65,22 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           </View>
         </View>
 
-        {/* Weekly Tracker */}
-        <View style={$topContainer}>
-          {weeklyProgress.map((day, index) => (
-            <DayCard key={index} day={day.day} date={day.date} progress={day.progress} />
+        {/* Streak Circles */}
+        <ScrollView horizontal contentContainerStyle={$streakContainer}>
+          {habitStore.dayStreak.map((slipUpCount, index) => (
+            <DayCard
+              key={index}
+              day={`Day ${index + 1}`}
+              progress={slipUpCount <= MAX_SLIPUPS ? ((MAX_SLIPUPS - slipUpCount) / MAX_SLIPUPS) * 100 : 0}
+            />
           ))}
+        </ScrollView>
+
+        {/* Streak Display */}
+        <View style={$streakDisplayContainer}>
+          <Text text={streakDisplay} size="lg" weight="bold" />
         </View>
 
-        {/* Habit Info or Add New Habit */}
         {!habitName ? (
           <View style={$addHabitContainer}>
             <Text style={{ marginBottom: spacing.lg }} size="lg" weight="bold">No habit set</Text>
@@ -93,8 +90,26 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           </View>
         ) : (
           <View>
-            <View style={$centerContainer}>
-              <Text text={`${habitName} Tracker`} size="lg" weight="bold" />
+            <View>
+              {/* Container for the habit name and the garbage icon */}
+              <View style={$headerRow}>
+                <Text text={`${habitName} Tracker`} size="lg" weight="bold" style={$centeredHabitName} />
+                <TouchableOpacity
+                  onPress={() => {
+                    habitStore.clearHabit()  // Clear the habit when clicked
+                    setSlipUps(0)  // Reset slip-ups
+                  }}
+                  style={$garbageIcon}
+                >
+                  <MaterialCommunityIcons
+                    name="trash-can-outline"
+                    color={colors.error}
+                    size={24}  // Adjust size if needed
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* The Circular Progress */}
               <AnimatedCircularProgress
                 size={200}
                 width={15}
@@ -106,36 +121,31 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               >
                 {() => (
                   <View style={$circularContent}>
-                    <Text text={`${slipUps}/${maxSlipUps}`} size="xl" />
+                    <Text text={`${slipUps}/${MAX_SLIPUPS}`} size="xl" />
                     <Text text="Slip-ups" size="sm" />
                   </View>
                 )}
               </AnimatedCircularProgress>
             </View>
 
-            {/* Add Slip-up Button */}
             <View style={$slipUpButtonContainer}>
               <TouchableOpacity onPress={increaseSlipUps} style={$slipUpButton}>
                 <Text text={`Count ${habitName}`} size="lg" weight="bold" style={$buttonText} />
               </TouchableOpacity>
             </View>
 
-            {/* Garbage Icon to remove the habit */}
-            <TouchableOpacity
-              onPress={() => {
-                habitStore.clearHabit()
-                setSlipUps(0)
-              }}
-              style={$removeHabitIcon}
-            >
-              <MaterialCommunityIcons name="trash-can" color={colors.error} size={28} />
-            </TouchableOpacity>
+            <View style={$streakButtonContainer}>
+              <TouchableOpacity onPress={addCurrentDayToStreak} style={$streakButton}>
+                <Text text="Add Current Day to Streak" size="lg" weight="bold" style={$buttonText} />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </BottomSheetModalProvider>
     </Screen>
   )
 })
+
 
 // Styles
 const $container: ViewStyle = {
@@ -168,19 +178,25 @@ const $headerBtn: ViewStyle = {
 const $image: ImageStyle = {
   width: 50,
   height: 50,
+  borderRadius: 99, // Make the image circular
 }
 
-const $topContainer: ViewStyle = {
-  flexDirection: "row",
-  gap: spacing.sm,
-  marginTop: spacing.lg,
+const $headerRow: ViewStyle = {
+  justifyContent: "center", // Center the habit namqe
+  position: "relative",     // Necessary for absolute positioning of the trash icon
+  alignItems: "center",      // Center items vertically
 }
 
-const $centerContainer: ViewStyle = {
-  justifyContent: "center",
-  alignItems: "center",
-  marginVertical: spacing.xl,
+const $centeredHabitName: TextStyle = {
+  textAlign: "center", // Ensure the habit name is centered
 }
+
+const $garbageIcon: ViewStyle = {
+  position: "absolute", // Position the garbage icon absolutely
+  right: 0,             // Align it to the right of the header row
+  padding: spacing.sm,  // Add padding for a better touch area
+}
+
 
 const $circularProgress: ViewStyle = {
   alignSelf: "center",
@@ -203,10 +219,22 @@ const $slipUpButton: ViewStyle = {
   borderRadius: spacing.sm,
 }
 
-const $removeHabitIcon: ViewStyle = {
-  position: "absolute",
-  top: spacing.md,
-  right: spacing.lg,
+const $streakButtonContainer: ViewStyle = {
+  marginTop: spacing.md,
+  justifyContent: "center",
+  alignItems: "center",
+}
+
+const $streakButton: ViewStyle = {
+  backgroundColor: colors.palette.primary600,
+  paddingVertical: spacing.md,
+  paddingHorizontal: spacing.xxl,
+  borderRadius: spacing.sm,
+}
+
+const $streakContainer: ViewStyle = {
+  flexDirection: "row",
+  marginTop: spacing.lg,
 }
 
 const $addHabitContainer: ViewStyle = {
@@ -222,8 +250,12 @@ const $addHabitButton: ViewStyle = {
   borderRadius: spacing.sm,
 }
 
+const $streakDisplayContainer: ViewStyle = {
+  justifyContent: "center",
+  alignItems: "center",
+  marginVertical: spacing.md,
+}
+
 const $buttonText: TextStyle = {
   color: colors.palette.neutral100,
 }
-
-

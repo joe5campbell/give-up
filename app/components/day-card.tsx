@@ -6,12 +6,11 @@ import { colors, spacing } from "../theme"
 
 // Interface for the DayCard component props
 interface DayCardProps {
-  day: string
-  date: string
-  progress: number // Progress will be in percentage (0-100)
+  day: string  // Day label (e.g., "Day 1", "Day 2")
+  progress: number  // Progress will be in percentage (0-100)
 }
 
-export const DayCard: React.FC<DayCardProps> = ({ day, date, progress }) => {
+export const DayCard: React.FC<DayCardProps> = ({ day, progress }) => {
   return (
     <View style={$dayCard}>
       {/* Day Label */}
@@ -25,8 +24,8 @@ export const DayCard: React.FC<DayCardProps> = ({ day, date, progress }) => {
         tintColor={colors.palette.primary400} // The color of the filled part of the progress
         backgroundColor={colors.palette.neutral100} // Background color
       >
-        {/* Inner content of the circular progress (e.g., the date) */}
-        {() => <Text text={date} size="xs" />}
+        {/* We no longer need to pass date; simply render an empty child */}
+        {() => <></>}
       </AnimatedCircularProgress>
     </View>
   )
