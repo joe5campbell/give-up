@@ -6,33 +6,29 @@ import { colors, spacing } from "../theme"
 
 // Interface for the DayCard component props
 interface DayCardProps {
-  day: string  // Day label (e.g., "Day 1", "Day 2")
-  progress: number  // Progress will be in percentage (0-100)
+  day: string
+  progress: number
+  tintColor: string // Add this line
 }
-
-export const DayCard: React.FC<DayCardProps> = ({ day, progress }) => {
+// DayCard Component
+export const DayCard: React.FC<{ day: string, progress: number, tintColor: string }> = ({ day, progress, tintColor }) => {
   return (
     <View style={$dayCard}>
-      {/* Day Label */}
       <Text text={day} />
-      
-      {/* Circular Progress Indicator */}
       <AnimatedCircularProgress
-        size={50} // Size of the circular progress
-        width={5} // Thickness of the circle
-        fill={progress} // Fill percentage based on slip-ups
-        tintColor={colors.palette.primary400} // The color of the filled part of the progress
-        backgroundColor={colors.palette.neutral100} // Background color
+        size={50}
+        width={5}
+        fill={progress}
+        tintColor={tintColor} // Use the tintColor prop passed down
+        backgroundColor={colors.palette.neutral100}
       >
-        {/* We no longer need to pass date; simply render an empty child */}
-        {() => <></>}
       </AnimatedCircularProgress>
     </View>
   )
 }
 
-// Styles for the DayCard
+// Add styles for DayCard container
 const $dayCard: ViewStyle = {
   alignItems: "center",
-  gap: spacing.sm,
-}
+  margin: spacing.md,
+} 

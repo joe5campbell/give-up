@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useState } from "react"
+import React, { FC, useState, useRef } from "react"
 import {
   View,
   Image,
@@ -15,16 +15,32 @@ import { AnimatedCircularProgress } from "react-native-circular-progress"
 import { Text, Screen } from "app/components"
 import { colors, spacing } from "../theme"
 import { habitStore } from "app/store/habit-store"
-import { DayCard } from "../components/day-card"
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
 
+// Utility function for color coding based on slip-ups
+const getProgressColors = (slipUps: number, maxSlipUps: number) => {
+  const progressPercentage = slipUps <= maxSlipUps ? ((maxSlipUps - slipUps) / maxSlipUps) * 100 : 0
+  if (progressPercentage === 100) {
+    return colors.success // Fully green for no slip-ups
+  } else if (progressPercentage > 0) {
+    return colors.tint // Partial progress, orange
+  } else {
+    return colors.error // Fully red for max slip-ups exceeded
+  }
+}
 
 interface HomeScreenProps {
   navigation: any
 }
 
+// Import fire icon
+const fireIcon = require("../../assets/images/fire_ring_2.webp")
+
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
   const [slipUps, setSlipUps] = useState(0)
+
+  // Add reference to ScrollView for auto-scrolling
+  const scrollViewRef = useRef<ScrollView>(null)
 
   const increaseSlipUps = () => {
     setSlipUps(slipUps + 1)
@@ -36,6 +52,13 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
     // Reset slip-ups counter for the next day
     setSlipUps(0)
+
+    // Scroll to the right after adding a new streak
+    setTimeout(() => {
+      if (scrollViewRef.current) {
+        scrollViewRef.current.scrollToEnd({ animated: true })  // Auto-scroll to the end of the ScrollView
+      }
+    }, 10) // Increase the timeout slightly to ensure UI updates
   }
 
   // Function to handle the garbage can click with streak confirmation
@@ -80,7 +103,9 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     setSlipUps(0)  // Reset slip-ups
   }
 
-  const fillPercentage = slipUps < habitStore.maxSlipUps ? ((habitStore.maxSlipUps - slipUps) / habitStore.maxSlipUps) * 100 : 0
+  const fillPercentage = slipUps < habitStore.maxSlipUps
+    ? ((habitStore.maxSlipUps - slipUps) / habitStore.maxSlipUps) * 100
+    : 0
 
   const habitName = habitStore.habitName
   const streakDisplay = habitStore.superStreak > 0
@@ -107,17 +132,40 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
         </View>
 
         {/* Streak Circles */}
-        <ScrollView horizontal contentContainerStyle={$streakContainer}>
-          {habitStore.dayStreak.map((dayData, index) => (
-            <DayCard
-              key={index}
-              day={`Day ${index + 1}`}
-              // Calculate the progress based on the max slip-ups for that specific day
-              progress={dayData.slipUpCount <= dayData.maxSlipUpsForDay 
-                ? ((dayData.maxSlipUpsForDay - dayData.slipUpCount) / dayData.maxSlipUpsForDay) * 100 
-                : 0}
-            />
-          ))}
+        <ScrollView
+          ref={scrollViewRef}  // Attach ref to the ScrollView
+          horizontal
+          contentContainerStyle={$streakContainer}
+        >
+          {habitStore.dayStreak.map((dayData, index) => {
+            const tintColor = getProgressColors(dayData.slipUpCount, dayData.maxSlipUpsForDay);
+            const progress = dayData.slipUpCount <= dayData.maxSlipUpsForDay 
+              ? ((dayData.maxSlipUpsForDay - dayData.slipUpCount) / dayData.maxSlipUpsForDay) * 100 
+              : 0;
+
+            return (
+              <View key={index} style={$dayCard}>
+                <Text text={`Day ${index + 1}`} size="sm" />
+                <AnimatedCircularProgress
+                  size={50}  // Size of the streak circle
+                  width={5}  // Thickness of the progress line
+                  fill={progress}  // Progress percentage
+                  tintColor={tintColor}  // Use centralized color logic
+                  backgroundColor={colors.palette.neutral300}  // Set a solid, neutral background color
+                  rotation={360}  // Make sure the progress is drawn as a circle
+                >
+                  {() => (
+                    <Text text={`${dayData.slipUpCount}/${dayData.maxSlipUpsForDay}`} size="xs" />
+                  )}
+                </AnimatedCircularProgress>
+
+                {/* Conditionally show the fire icon if on a super streak */}
+                {habitStore.superStreak > 0 && (
+                  <Image source={fireIcon} style={$fireIcon} />
+                )}
+              </View>
+            );
+          })}
         </ScrollView>
 
         {/* Streak Display */}
@@ -156,7 +204,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
                 width={15}
                 fill={fillPercentage}
                 rotation={360}
-                tintColor={colors.success}
+                tintColor={getProgressColors(slipUps, habitStore.maxSlipUps)}  // Use centralized color logic
                 backgroundColor={colors.error}
                 style={$circularProgress}
               >
@@ -177,7 +225,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
             <View style={$streakButtonContainer}>
               <TouchableOpacity onPress={addCurrentDayToStreak} style={$streakButton}>
-                <Text text="Add Current Day to Streak" size="lg" weight="bold" style={$buttonText} />
+                <Text text="Add Day to Streak" size="lg" weight="bold" style={$buttonText} />
               </TouchableOpacity>
             </View>
           </View>
@@ -186,7 +234,6 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     </Screen>
   )
 })
-
 
 // Styles
 const $container: ViewStyle = {
@@ -223,7 +270,7 @@ const $image: ImageStyle = {
 }
 
 const $headerRow: ViewStyle = {
-  justifyContent: "center", // Center the habit namqe
+  justifyContent: "center", // Center the habit name
   position: "relative",     // Necessary for absolute positioning of the trash icon
   alignItems: "center",      // Center items vertically
 }
@@ -237,7 +284,6 @@ const $garbageIcon: ViewStyle = {
   right: 0,             // Align it to the right of the header row
   padding: spacing.sm,  // Add padding for a better touch area
 }
-
 
 const $circularProgress: ViewStyle = {
   alignSelf: "center",
@@ -277,6 +323,20 @@ const $streakContainer: ViewStyle = {
   flexDirection: "row",
   marginTop: spacing.lg,
 }
+
+const $fireIcon: ImageStyle = {
+  width: 57,  // Match the size of the streak circle
+  height: 57,  // Match the size of the streak circle
+  position: 'absolute',  // Position it absolutely over the streak circle
+  top: 21,  // Align it to the top
+  left: -1,  // Align it to the left
+};
+
+
+const $dayCard: ViewStyle = {
+  alignItems: "center",  // Center the text and circle
+  margin: spacing.sm,    // Add spacing around each streak circle
+};
 
 const $addHabitContainer: ViewStyle = {
   justifyContent: "center",
