@@ -17,9 +17,6 @@ import { habitStore } from "app/store/habit-store"
 import { DayCard } from "../components/day-card"
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
 
-// Number of allowed slip-ups per day
-const MAX_SLIPUPS = habitStore.maxSlipUps
-
 interface HomeScreenProps {
   navigation: any
 }
@@ -39,7 +36,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     setSlipUps(0)
   }
 
-  const fillPercentage = slipUps < MAX_SLIPUPS ? ((MAX_SLIPUPS - slipUps) / MAX_SLIPUPS) * 100 : 0
+  const fillPercentage = slipUps < habitStore.maxSlipUps ? ((habitStore.maxSlipUps - slipUps) / habitStore.maxSlipUps) * 100 : 0
 
   const habitName = habitStore.habitName
   const streakDisplay = habitStore.superStreak > 0
@@ -67,11 +64,14 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
         {/* Streak Circles */}
         <ScrollView horizontal contentContainerStyle={$streakContainer}>
-          {habitStore.dayStreak.map((slipUpCount, index) => (
+          {habitStore.dayStreak.map((dayData, index) => (
             <DayCard
               key={index}
               day={`Day ${index + 1}`}
-              progress={slipUpCount <= MAX_SLIPUPS ? ((MAX_SLIPUPS - slipUpCount) / MAX_SLIPUPS) * 100 : 0}
+              // Calculate the progress based on the max slip-ups for that specific day
+              progress={dayData.slipUpCount <= dayData.maxSlipUpsForDay 
+                ? ((dayData.maxSlipUpsForDay - dayData.slipUpCount) / dayData.maxSlipUpsForDay) * 100 
+                : 0}
             />
           ))}
         </ScrollView>
@@ -121,7 +121,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               >
                 {() => (
                   <View style={$circularContent}>
-                    <Text text={`${slipUps}/${MAX_SLIPUPS}`} size="xl" />
+                    <Text text={`${slipUps}/${habitStore.maxSlipUps}`} size="xl" />
                     <Text text="Slip-ups" size="sm" />
                   </View>
                 )}

@@ -7,7 +7,7 @@ class HabitStore {
   streak = 0
   superStreak = 0
   slipUpsToday = 0
-  dayStreak: number[] = []  // Track streaks
+  dayStreak: { slipUpCount: number, maxSlipUpsForDay: number }[] = [] // Store slip-ups and max slip-ups
 
   constructor() {
     makeAutoObservable(this)
@@ -32,17 +32,19 @@ class HabitStore {
   resetDailySlipUps(slipUps: number) {
     if (slipUps === 0) {
       this.superStreak += 1  // Increment super streak when no slip-ups
-      this.streak += 1  // Continue current streak during super streak
-    } else if (slipUps <= this.maxSlipUps) {
+    }
+    if (slipUps <= this.maxSlipUps) {
       this.streak += 1  // Increment streak if within limit
-      this.superStreak = 0  // Reset super streak if any slip-ups happen
     } else {
       this.streak = 0  // Reset streak if limit exceeded
-      this.superStreak = 0  // Reset super streak too
+      this.superStreak = 0 // Reset super streak as well
     }
 
-    // Add the day's slip-ups to the dayStreak array
-    this.dayStreak.push(slipUps)
+    // Add the current day's slip-up count and max slip-ups to the day streak
+    this.dayStreak.push({
+      slipUpCount: slipUps,
+      maxSlipUpsForDay: this.maxSlipUps,  // Store the max slip-ups for the day
+    })
   }
 
   clearHabit() {
