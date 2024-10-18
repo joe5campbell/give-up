@@ -31,6 +31,6 @@
       "module": "commonjs"
     }
   },
-  "include": ["index.js", "App.tsx", "app", "types", "plugins", "app.config.ts"],
+  "include": ["index.js", "App.tsx", "app", "types", "plugins", "app.config.ts", "archive/screens/edit-habit.tsx"],
   "exclude": ["node_modules", "test/**/*"]
 }

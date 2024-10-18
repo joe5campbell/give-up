@@ -47,14 +47,8 @@ const Stack = createNativeStackNavigator<HomeStackParamList>()
 const HomeStack = observer(function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, navigationBarColor: colors.background }}>
-      {/* @ts-expect-error type props error */}
       <Stack.Screen name="Home" component={Screens.HomeScreen} />
-      {/* @ts-expect-error type props error */}
       <Stack.Screen name="CreateHabit" component={Screens.CreateHabitScreen} />
-      {/* @ts-expect-error type props error */}
-      <Stack.Screen name="CreateNewHabit" component={Screens.CreateNewHabitScreen} />
-      {/* @ts-expect-error type props error */}
-      <Stack.Screen name="EditHabit" component={Screens.EditHabitScreen} />
     </Stack.Navigator>
   )
 })

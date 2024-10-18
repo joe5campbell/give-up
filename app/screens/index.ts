@@ -1,8 +1,5 @@
 export * from "./home"
 export * from "./ErrorScreen/ErrorBoundary"
 export * from "./create-habit"
-export * from "./create-new-habit"
-export * from "./edit-habit"
 export * from "./statistics"
 export * from "./settings"
-// export * from "./profile/personal-infos"

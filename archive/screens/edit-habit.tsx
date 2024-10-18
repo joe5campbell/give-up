@@ -14,8 +14,8 @@ import DateTimePicker from "@react-native-community/datetimepicker"
 import { Text, Screen, Icon, Button, TextField, Toggle } from "app/components"
 import layout from "app/utils/layout"
 
-import { HomeStackScreenProps } from "../navigators/types"
-import { colors, spacing } from "../theme"
+import { HomeStackScreenProps } from "../../app/navigators/types"
+import { colors, spacing } from "../../app/theme"
 import { days, reminders } from "app/screens/create-new-habit"
 import { tasks } from "app/screens/home"
 
