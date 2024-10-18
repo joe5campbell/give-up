@@ -8,6 +8,8 @@ class HabitStore {
   superStreak = 0
   slipUpsToday = 0
   dayStreak: { slipUpCount: number, maxSlipUpsForDay: number }[] = [] // Store slip-ups and max slip-ups
+  hasSeenStreakPrompt = false // New flag to track if the streak prompt has been shown
+  hasSelectedClearHabit = false // New flag to track if the user has selected to clear the habit
 
   constructor() {
     makeAutoObservable(this)
@@ -59,6 +61,8 @@ class HabitStore {
     this.description = ""
     this.maxSlipUps = 0
     this.slipUpsToday = 0
+    this.hasSeenStreakPrompt = false // Reset the prompt flag when the habit is cleared
+    this.hasSelectedClearHabit = false // Reset the clear flag when the habit is cleared
   }
 }
 

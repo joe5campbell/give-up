@@ -4,13 +4,15 @@ import { StackScreenProps } from "@react-navigation/stack"
 
 export type HomeStackParamList = {
   Home: undefined
-  CreateHabit: undefined
+  CreateHabit: {
+    hasAcknowledgedStreak?: boolean;
+    hasSelectedClearHabit?: boolean;
+  }
   CreateNewHabit: undefined
   EditHabit: {
     habitId: number
   }
 }
-
 export type SettingsStackParamList = {
   Settings: undefined
   PersonalInfos: undefined
@@ -34,6 +36,7 @@ export type HomeStackScreenProps<T extends keyof HomeStackParamList> = Composite
   BottomTabScreenProps<TabParamList, "HomeStack">,
   StackScreenProps<HomeStackParamList, T>
 >
+
 export type StatisticsScreenProps = BottomTabScreenProps<TabParamList, "Statistics">
 
 export type SettingsScreenProps<T extends keyof SettingsStackParamList> = CompositeScreenProps<

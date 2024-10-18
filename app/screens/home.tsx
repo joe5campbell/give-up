@@ -37,7 +37,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     // Reset slip-ups counter for the next day
     setSlipUps(0)
   }
-  
+
   // Function to handle the garbage can click with streak confirmation
   const handleDeleteHabit = () => {
     if (habitStore.dayStreak.length > 0) {
@@ -45,12 +45,29 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
         "Reset Streak?",
         "You have an existing streak. Do you want to reset it as well?",
         [
-          { text: "No", onPress: () => clearHabit(false) },  // Do not reset streak
-          { text: "Yes", onPress: () => clearHabit(true) },   // Reset streak
+          {
+            text: "Yes",
+            onPress: () => {
+              habitStore.hasSeenStreakPrompt = true  // Set flag to skip prompt
+              habitStore.hasSelectedClearHabit = true  // User chose to clear streak
+              navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: true })  // Explicitly pass the params
+            },
+          },
+          {
+            text: "No",
+            onPress: () => {
+              habitStore.hasSeenStreakPrompt = true  // Set flag to skip prompt
+              habitStore.hasSelectedClearHabit = false  // User chose NOT to clear streak
+              navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: false })  // Explicitly pass the params
+            },
+            style: "cancel",
+          },
         ]
       )
     } else {
-      clearHabit(false)  // No streak, just clear the habit
+      // No streak, just clear the habit without prompt
+      clearHabit(false)
+      navigation.navigate("CreateHabit")
     }
   }
 

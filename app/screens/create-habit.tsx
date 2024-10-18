@@ -1,23 +1,28 @@
 import React, { useState } from "react"
 import { View, TextInput, ViewStyle, TextStyle, Alert } from "react-native"
+import { RouteProp } from '@react-navigation/native';
 import { Text, Button, Screen } from "app/components"
 import { colors, spacing } from "../theme"
-import { HomeStackScreenProps } from "../navigators/types"
+import { HomeStackScreenProps, HomeStackParamList } from "../navigators/types"
 import { habitStore } from "app/store/habit-store"
 
-export const CreateHabitScreen = ({ navigation }: HomeStackScreenProps<"CreateHabit">) => {
+export const CreateHabitScreen = ({ navigation, route }: HomeStackScreenProps<"CreateHabit">) => {
   const [habitName, setHabitName] = useState("")
   const [description, setDescription] = useState("")
   const [maxSlipUps, setMaxSlipUps] = useState("")  // New state for max slip-ups
 
+  const { params } = route as unknown as RouteProp<HomeStackParamList, "CreateHabit">;
+  const hasAcknowledgedStreak = params?.hasAcknowledgedStreak ?? false;
+  const hasSelectedClearHabit = params?.hasSelectedClearHabit ?? false;
+
   // Function to handle the habit creation process
   const handleCreateHabit = () => {
-    if (habitStore.dayStreak.length > 0) {
-      // Show confirmation pop-up if streaks exist
+    if (habitStore.dayStreak.length > 0 && !hasAcknowledgedStreak) {
+      // Show confirmation pop-up if streaks exist and haven't been acknowledged
       showStreakResetConfirmation()
     } else {
-      // No streaks, save habit directly
-      saveHabit(false)
+      // Streak acknowledged or no streak, save habit directly
+      saveHabit(hasSelectedClearHabit)
     }
   }
 
@@ -42,8 +47,20 @@ export const CreateHabitScreen = ({ navigation }: HomeStackScreenProps<"CreateHa
       "Reset Streak?",
       "You have an existing streak. Do you want to reset it as well?",
       [
-        { text: "No", onPress: () => saveHabit(false) },  // Don't reset streak
-        { text: "Yes", onPress: () => saveHabit(true) },  // Reset streak
+        {
+          text: "Yes",
+          onPress: () => {
+            navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: true })  // Update flags
+            saveHabit(true)  // Reset streak
+          },
+        },
+        {
+          text: "No",
+          onPress: () => {
+            navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: false })  // Update flags
+            saveHabit(false)  // Don't reset streak
+          },
+        },
       ]
     )
   }
