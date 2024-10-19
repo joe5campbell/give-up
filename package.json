@@ -1,5 +1,5 @@
 {
-  "name": "habit-tracker",
+  "name": "give-up",
   "version": "1.0.0",
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
@@ -112,7 +112,7 @@
     "typescript": "~5.3.3"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=18"
   },
   "prettier": {
     "printWidth": 100,

@@ -1,15 +1,15 @@
 {
-  "name": "Habit Tracker",
-  "displayName": "Habit Tracker",
+  "name": "Give Up",
+  "displayName": "Give Up",
   "expo": {
-    "name": "Habit Tracker",
-    "slug": "habittracker",
-    "scheme": "habittracker",
+    "name": "Give Up",
+    "slug": "give-up",
+    "scheme": "giveup",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/app-icon-all.png",
+    "icon": "./assets/images/Just Give Up Circle Logo.png",
     "splash": {
-      "image": "./assets/images/splash-logo-all.png",
+      "image": "./assets/images/Just Give Up Circle Logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#191015"
     },
@@ -20,7 +20,7 @@
     "assetBundlePatterns": ["**/*"],
     "android": {
       "icon": "./assets/images/app-icon-android-legacy.png",
-      "package": "com.habittracker",
+      "package": "com.giveup",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
         "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
@@ -34,7 +34,7 @@
     "ios": {
       "icon": "./assets/images/app-icon-ios.png",
       "supportsTablet": true,
-      "bundleIdentifier": "com.habittracker",
+      "bundleIdentifier": "com.giveup",
       "splash": {
         "image": "./assets/images/splash-logo-ios-mobile.png",
         "tabletImage": "./assets/images/splash-logo-ios-tablet.png",
@@ -72,7 +72,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "f12845f7-c2fb-44ea-97e8-db2816a8be8a"
+        "projectId": "62f082c1-1f41-4210-9b79-18bef36a6c5f"
       }
     }
   },
