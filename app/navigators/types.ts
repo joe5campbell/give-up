@@ -15,7 +15,7 @@ export type HomeStackParamList = {
 }
 export type SettingsStackParamList = {
   Settings: undefined
-  PersonalInfos: undefined
+  PersonalInfo: undefined
   Notifications: undefined
   Security: undefined
   EditPassword: undefined
@@ -23,7 +23,7 @@ export type SettingsStackParamList = {
   AboutUs: undefined
   Rating: undefined
   Support: undefined
-  EditPersonalInfos: undefined
+  EditPersonalInfo: undefined
 }
 
 export type TabParamList = {

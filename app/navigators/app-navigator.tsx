@@ -17,8 +17,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import MaterialIcons from "@expo/vector-icons/MaterialIcons"
 import { HomeStackParamList, SettingsStackParamList, TabParamList } from "app/navigators/types"
 import { $tabBarStyles } from "app/navigators/styles"
-import { PersonalInfosScreen } from "app/screens/profile/personal-infos"
-import { EditPersonalInfosScreen } from "app/screens/profile/edit-personal-infos"
+import { PersonalInfoScreen } from "app/screens/profile/personal-info"
+import { EditPersonalInfoScreen } from "app/screens/profile/edit-personal-info"
 import { EditPasswordScreen } from "app/screens/profile/edit-password"
 
 /**
@@ -64,9 +64,9 @@ const SettingsStack = observer(function SettingsStack() {
       {/* @ts-expect-error type props error */}
       <SettingStack.Screen name="Settings" component={Screens.SettingsScreen} />
       {/* @ts-expect-error type props error */}
-      <SettingStack.Screen name="PersonalInfos" component={PersonalInfosScreen} />
+      <SettingStack.Screen name="PersonalInfo" component={PersonalInfoScreen} />
       {/* @ts-expect-error type props error */}
-      <SettingStack.Screen name="EditPersonalInfos" component={EditPersonalInfosScreen} />
+      <SettingStack.Screen name="EditPersonalInfo" component={EditPersonalInfoScreen} />
       {/* @ts-expect-error type props error */}
       <SettingStack.Screen name="EditPassword" component={EditPasswordScreen} />
     </SettingStack.Navigator>

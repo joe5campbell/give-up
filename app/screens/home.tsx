@@ -325,11 +325,11 @@ const $streakContainer: ViewStyle = {
 }
 
 const $fireIcon: ImageStyle = {
-  width: 57,  // Match the size of the streak circle
-  height: 57,  // Match the size of the streak circle
+  width: 60,  // Match the size of the streak circle
+  height: 60,  // Match the size of the streak circle
   position: 'absolute',  // Position it absolutely over the streak circle
-  top: 21,  // Align it to the top
-  left: -1,  // Align it to the left
+  top: 19,  // Align it to the top
+  left: -3,  // Align it to the left
 };
 
 

@@ -17,10 +17,10 @@ interface GeneralLinkType {
 
 const generalLinks: GeneralLinkType[] = [
   {
-    title: "Personal Infos",
+    title: "Personal Info",
     icon: "user",
     id: 1,
-    to: "PersonalInfos",
+    to: "PersonalInfo",
   },
   {
     title: "Dark Mode",
@@ -74,16 +74,16 @@ export const SettingsScreen: FC<SettingsScreenProps<"Settings">> = observer(
       <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
         <Text text="Settings" preset="subheading" size="xl" />
         <View style={$topContainer}>
-          <Icon icon="avatar" />
-          <View style={$userInfosContainer}>
+          <Icon icon="avatar" size={30} /> 
+          <View style={$userInfoContainer}>
             <View>
-              <Text text="El Hadji Malick Seck" preset="subheading" />
-              <Text text="elhadjimalick@gmail.com" size="xs" style={{ color: colors.textDim }} />
+              <Text text="Joe Campbell" preset="subheading" />
+              <Text text="joe.w.campbell@icloud.com" size="xs" style={{ color: colors.textDim }} />
             </View>
             <Icon
               icon="pencil"
-              size={18}
-              onPress={() => navigation.navigate("EditPersonalInfos")}
+              size={18}  
+              onPress={() => navigation.navigate("EditPersonalInfo")}
             />
           </View>
         </View>
@@ -156,7 +156,7 @@ export function Link(props: LinkProps) {
     <View style={{ gap: spacing.xs }}>
       <TouchableOpacity style={$generalLink} onPress={handleClick}>
         <View style={$generalName}>
-          <Icon icon={icon} />
+          <Icon icon={icon} size={18} />
           <Text text={title} />
         </View>
         {title === "Dark Mode" ? (
@@ -198,7 +198,7 @@ const $topContainer: ViewStyle = {
   maxWidth: layout.window.width * 0.95,
 }
 
-const $userInfosContainer: ViewStyle = {
+const $userInfoContainer: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",

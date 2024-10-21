@@ -9,23 +9,23 @@ import { Link } from "app/screens/settings"
 import { colors, spacing } from "app/theme"
 import { SettingsScreenProps } from "app/navigators/types"
 
-export const EditPersonalInfosScreen: FC<SettingsScreenProps<"EditPersonalInfos">> = observer(
-  function EditPersonalInfosScreen({ navigation }) {
-    const [infos, setInfos] = React.useState({
-      fullName: "El Hadji Malick Seck",
-      email: "elhadjimalick@gmail.com",
-      bio: "Full Stack Dev",
-      twitter: "@takanome_dev",
-      linkedin: "@takanome_dev",
-      instagram: "@takanome_dev",
-      facebook: "@takanome_dev",
+export const EditPersonalInfoScreen: FC<SettingsScreenProps<"EditPersonalInfo">> = observer(
+  function EditPersonalInfoScreen({ navigation }) {
+    const [info, setInfo] = React.useState({
+      fullName: "Joe Campbell",
+      email: "joe.w.campbell@icloud.com",
+      bio: "",
+      twitter: "",
+      linkedin: "",
+      instagram: "",
+      facebook: "",
     })
 
     return (
       <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
         <View style={$headerContainer}>
           <Icon icon="back" color={colors.text} onPress={() => navigation.goBack()} />
-          <Text text="Edit personal infos" preset="heading" size="lg" />
+          <Text text="Edit personal info" preset="heading" size="lg" />
         </View>
 
         <View style={$generalContainer}>
@@ -33,8 +33,8 @@ export const EditPersonalInfosScreen: FC<SettingsScreenProps<"EditPersonalInfos"
           <View style={$generalLinksContainer}>
             <TextField
               label="FullName"
-              value={infos.fullName}
-              onChangeText={(text) => setInfos({ ...infos, ["fullName"]: text })}
+              value={info.fullName}
+              onChangeText={(text) => setInfo({ ...info, ["fullName"]: text })}
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
                 backgroundColor: colors.palette.neutral100,
@@ -43,8 +43,8 @@ export const EditPersonalInfosScreen: FC<SettingsScreenProps<"EditPersonalInfos"
             <TextField
               label="Email"
               keyboardType="email-address"
-              value={infos.email}
-              onChangeText={(text) => setInfos({ ...infos, ["email"]: text })}
+              value={info.email}
+              onChangeText={(text) => setInfo({ ...info, ["email"]: text })}
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
                 backgroundColor: colors.palette.neutral100,
@@ -52,8 +52,8 @@ export const EditPersonalInfosScreen: FC<SettingsScreenProps<"EditPersonalInfos"
             />
             <TextField
               label="Bio"
-              value={infos.bio}
-              onChangeText={(text) => setInfos({ ...infos, ["bio"]: text })}
+              value={info.bio}
+              onChangeText={(text) => setInfo({ ...info, ["bio"]: text })}
               multiline
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
@@ -68,8 +68,8 @@ export const EditPersonalInfosScreen: FC<SettingsScreenProps<"EditPersonalInfos"
           <View style={$generalLinksContainer}>
             <TextField
               label="Twitter/X"
-              value={infos.twitter}
-              onChangeText={(text) => setInfos({ ...infos, ["twitter"]: text })}
+              value={info.twitter}
+              onChangeText={(text) => setInfo({ ...info, ["twitter"]: text })}
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
                 backgroundColor: colors.palette.neutral100,
@@ -77,8 +77,8 @@ export const EditPersonalInfosScreen: FC<SettingsScreenProps<"EditPersonalInfos"
             />
             <TextField
               label="Linkedin"
-              value={infos.linkedin}
-              onChangeText={(text) => setInfos({ ...infos, ["linkedin"]: text })}
+              value={info.linkedin}
+              onChangeText={(text) => setInfo({ ...info, ["linkedin"]: text })}
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
                 backgroundColor: colors.palette.neutral100,
@@ -86,8 +86,8 @@ export const EditPersonalInfosScreen: FC<SettingsScreenProps<"EditPersonalInfos"
             />
             <TextField
               label="Facebook"
-              value={infos.facebook}
-              onChangeText={(text) => setInfos({ ...infos, ["facebook"]: text })}
+              value={info.facebook}
+              onChangeText={(text) => setInfo({ ...info, ["facebook"]: text })}
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
                 backgroundColor: colors.palette.neutral100,
@@ -95,8 +95,8 @@ export const EditPersonalInfosScreen: FC<SettingsScreenProps<"EditPersonalInfos"
             />
             <TextField
               label="Instagram"
-              value={infos.instagram}
-              onChangeText={(text) => setInfos({ ...infos, ["instagram"]: text })}
+              value={info.instagram}
+              onChangeText={(text) => setInfo({ ...info, ["instagram"]: text })}
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
                 backgroundColor: colors.palette.neutral100,
@@ -108,7 +108,7 @@ export const EditPersonalInfosScreen: FC<SettingsScreenProps<"EditPersonalInfos"
         <Button
           style={$btn}
           textStyle={{ color: colors.palette.neutral100 }}
-          onPress={() => navigation.navigate("PersonalInfos")}
+          onPress={() => navigation.navigate("PersonalInfo")}
         >
           Save changes
         </Button>

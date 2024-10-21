@@ -67,10 +67,11 @@ export function Icon(props: IconProps) {
     TouchableOpacityProps | ViewProps
   >
 
+  const defaultIconSize = 50 // You can set this to your preferred default size
   const $imageStyle: StyleProp<ImageStyle> = [
     $imageStyleBase,
     color !== undefined && { tintColor: color },
-    size !== undefined && { width: size, height: size },
+    { width: size || defaultIconSize, height: size || defaultIconSize }, // Apply default size if not provided
     $imageStyleOverride,
   ]
 
@@ -87,7 +88,7 @@ export function Icon(props: IconProps) {
 
 export const iconRegistry = {
   alert: require("../../assets/icons/alert.png"),
-  avatar: require("../../assets/images/user-image.png"),
+  avatar: require("../../assets/images/User Icon-modified.png"),
   back: require("../../assets/icons/back.png"),
   bell: require("../../assets/icons/bell.png"),
   bellFilled: require("../../assets/icons/bell-filled.png"),
@@ -113,5 +114,5 @@ export const iconRegistry = {
 }
 
 const $imageStyleBase: ImageStyle = {
-  resizeMode: "contain",
+  resizeMode: "contain", // This ensures the image will scale to fit within the bounds defined by width and height
 }

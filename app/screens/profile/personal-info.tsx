@@ -8,24 +8,24 @@ import { Link } from "app/screens/settings"
 import { colors, spacing } from "app/theme"
 import { SettingsScreenProps } from "app/navigators/types"
 
-export const PersonalInfosScreen: FC<SettingsScreenProps<"PersonalInfos">> = observer(
-  function PersonalInfosScreen({ navigation }) {
+export const PersonalInfoScreen: FC<SettingsScreenProps<"PersonalInfo">> = observer(
+  function PersonalInfoScreen({ navigation }) {
     return (
       <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
         <View style={$headerContainer}>
           <View style={$headerBackContainer}>
             <Icon icon="back" color={colors.text} onPress={() => navigation.goBack()} />
-            <Text text="Personal Infos" preset="heading" size="lg" />
+            <Text text="Personal Info" preset="heading" size="lg" />
           </View>
-          <Icon icon="pencil" size={16} onPress={() => navigation.navigate("EditPersonalInfos")} />
+          <Icon icon="pencil" size={16} onPress={() => navigation.navigate("EditPersonalInfo")} />
         </View>
 
         <View style={$generalContainer}>
           <Text text="General" preset="formLabel" />
           <View style={$generalLinksContainer}>
             <TextField
-              label="FullName"
-              value="EL Hadji Malick Seck"
+              label="Full Name"
+              value="Joe Campbell"
               readOnly
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
@@ -34,7 +34,7 @@ export const PersonalInfosScreen: FC<SettingsScreenProps<"PersonalInfos">> = obs
             />
             <TextField
               label="Email"
-              value="elhadjimalick@gmail.com"
+              value="joe.w.campbell@icloud.com"
               readOnly
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
@@ -43,7 +43,7 @@ export const PersonalInfosScreen: FC<SettingsScreenProps<"PersonalInfos">> = obs
             />
             <TextField
               label="Bio"
-              value="Full Stack Developer | Open Source Enthusiast"
+              value=""
               readOnly
               multiline
               inputWrapperStyle={{
@@ -73,7 +73,7 @@ export const PersonalInfosScreen: FC<SettingsScreenProps<"PersonalInfos">> = obs
             <TextField
               label="Twitter/X"
               readOnly
-              value="@takanome_dev"
+              value=""
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
                 backgroundColor: colors.palette.neutral100,
@@ -81,7 +81,7 @@ export const PersonalInfosScreen: FC<SettingsScreenProps<"PersonalInfos">> = obs
             />
             <TextField
               label="Linkedin"
-              value="@takanome-dev"
+              value=""
               readOnly
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
@@ -91,7 +91,7 @@ export const PersonalInfosScreen: FC<SettingsScreenProps<"PersonalInfos">> = obs
             <TextField
               label="Facebook"
               readOnly
-              value="@takanome-dev"
+              value=""
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
                 backgroundColor: colors.palette.neutral100,
@@ -100,7 +100,7 @@ export const PersonalInfosScreen: FC<SettingsScreenProps<"PersonalInfos">> = obs
             <TextField
               label="Instagram"
               readOnly
-              value="@takanome-dev"
+              value=""
               inputWrapperStyle={{
                 borderRadius: spacing.xs,
                 backgroundColor: colors.palette.neutral100,
@@ -112,7 +112,7 @@ export const PersonalInfosScreen: FC<SettingsScreenProps<"PersonalInfos">> = obs
         <Button
           style={$btn}
           textStyle={{ color: colors.palette.neutral100 }}
-          onPress={() => navigation.navigate("EditPersonalInfos")}
+          onPress={() => navigation.navigate("EditPersonalInfo")}
         >
           Edit profile
         </Button>

@@ -9,7 +9,7 @@ import { SettingsScreenProps } from "app/navigators/types"
 
 export const EditPasswordScreen: FC<SettingsScreenProps<"EditPassword">> = observer(
   function EditPasswordScreen({ navigation }) {
-    const [infos, setInfos] = React.useState({
+    const [info, setInfo] = React.useState({
       current_password: "",
       new_password: "",
       confirm_new_password: "",
@@ -25,9 +25,9 @@ export const EditPasswordScreen: FC<SettingsScreenProps<"EditPassword">> = obser
         <View style={$generalLinksContainer}>
           <TextField
             label="Current password"
-            value={infos.current_password}
+            value={info.current_password}
             secureTextEntry
-            onChangeText={(text) => setInfos({ ...infos, ["current_password"]: text })}
+            onChangeText={(text) => setInfo({ ...info, ["current_password"]: text })}
             inputWrapperStyle={{
               borderRadius: spacing.xs,
               backgroundColor: colors.palette.neutral100,
@@ -36,8 +36,8 @@ export const EditPasswordScreen: FC<SettingsScreenProps<"EditPassword">> = obser
           <TextField
             label="New password"
             secureTextEntry
-            value={infos.new_password}
-            onChangeText={(text) => setInfos({ ...infos, ["new_password"]: text })}
+            value={info.new_password}
+            onChangeText={(text) => setInfo({ ...info, ["new_password"]: text })}
             inputWrapperStyle={{
               borderRadius: spacing.xs,
               backgroundColor: colors.palette.neutral100,
@@ -46,8 +46,8 @@ export const EditPasswordScreen: FC<SettingsScreenProps<"EditPassword">> = obser
           <TextField
             label="Confirm new password"
             secureTextEntry
-            value={infos.confirm_new_password}
-            onChangeText={(text) => setInfos({ ...infos, ["confirm_new_password"]: text })}
+            value={info.confirm_new_password}
+            onChangeText={(text) => setInfo({ ...info, ["confirm_new_password"]: text })}
             inputWrapperStyle={{
               borderRadius: spacing.xs,
               backgroundColor: colors.palette.neutral100,
@@ -58,7 +58,7 @@ export const EditPasswordScreen: FC<SettingsScreenProps<"EditPassword">> = obser
         <Button
           style={$btn}
           textStyle={{ color: colors.palette.neutral100 }}
-          onPress={() => navigation.navigate("PersonalInfos")}
+          onPress={() => navigation.navigate("PersonalInfo")}
         >
           Save changes
         </Button>
