@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useState, useRef, useEffect } from "react"  // Added useEffect
+import React, { FC, useState, useRef, useEffect } from "react"
 import {
   View,
   Image,
@@ -12,45 +12,63 @@ import {
 } from "react-native"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import { AnimatedCircularProgress } from "react-native-circular-progress"
+import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet"
 import { Text, Screen } from "app/components"
 import { colors, spacing } from "../theme"
 import { habitStore } from "app/store/habit-store"
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet"
+import { CalendarView } from "app/components/CalendarView"
 
-// Utility function for color coding based on slip-ups
 const getProgressColors = (slipUps: number, maxSlipUps: number) => {
+  if (slipUps === 0) {
+    return colors.superStreak
+  }
   const progressPercentage = slipUps <= maxSlipUps ? ((maxSlipUps - slipUps) / maxSlipUps) * 100 : 0
   if (progressPercentage === 100) {
-    return colors.success // Fully green for no slip-ups
+    return colors.success
   } else if (progressPercentage > 0) {
-    return colors.tint // Partial progress, orange
+    return colors.tint
   } else {
-    return colors.error // Fully red for max slip-ups exceeded
+    return colors.error
   }
+}
+
+const createWeekArray = () => {
+  // European style (Monday first)
+  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+  const recentDays = habitStore.dayStreak.slice(-7)
+  
+  // Create array with fixed positions for each day
+  return days.map((day, index) => {
+    const dayData = recentDays[index]
+    return {
+      letter: day,
+      data: dayData
+    }
+  })
 }
 
 interface HomeScreenProps {
   navigation: any
 }
 
-// Import fire icon
-const fireIcon = require("../../assets/images/fire_ring_2.webp")
-
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
   const [slipUps, setSlipUps] = useState(0)
   const scrollViewRef = useRef<ScrollView>(null)
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null)
+
+  const handleOpenCalendar = () => {
+    bottomSheetModalRef.current?.present()
+  }
 
   useEffect(() => {
-    // Short delay to ensure the ScrollView has rendered with its content
     const timer = setTimeout(() => {
       if (scrollViewRef.current && habitStore.dayStreak.length > 0) {
         scrollViewRef.current.scrollToEnd({ animated: true })
       }
-    }, 100) // Slightly longer timeout for initial load
+    }, 100)
 
-    return () => clearTimeout(timer) // Cleanup timeout
-  }, []) // Empty dependency array means this runs once on mount
-
+    return () => clearTimeout(timer)
+  }, [])
 
   const increaseSlipUps = () => {
     setSlipUps(slipUps + 1)
@@ -67,7 +85,6 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     }, 10)
   }
 
-  // Function to handle the garbage can click with streak confirmation
   const handleDeleteHabit = () => {
     if (habitStore.dayStreak.length > 0) {
       Alert.alert(
@@ -77,36 +94,34 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           {
             text: "Yes",
             onPress: () => {
-              habitStore.hasSeenStreakPrompt = true  // Set flag to skip prompt
-              habitStore.hasSelectedClearHabit = true  // User chose to clear streak
-              navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: true })  // Explicitly pass the params
+              habitStore.hasSeenStreakPrompt = true
+              habitStore.hasSelectedClearHabit = true
+              navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: true })
             },
           },
           {
             text: "No",
             onPress: () => {
-              habitStore.hasSeenStreakPrompt = true  // Set flag to skip prompt
-              habitStore.hasSelectedClearHabit = false  // User chose NOT to clear streak
-              navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: false })  // Explicitly pass the params
+              habitStore.hasSeenStreakPrompt = true
+              habitStore.hasSelectedClearHabit = false
+              navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: false })
             },
             style: "cancel",
           },
         ]
       )
     } else {
-      // No streak, just clear the habit without prompt
       clearHabit(false)
       navigation.navigate("CreateHabit")
     }
   }
 
-  // Function to clear the habit and reset the streak if confirmed
   const clearHabit = (resetStreak: boolean) => {
     if (resetStreak) {
-      habitStore.clearStreaks()  // Clear streaks if needed
+      habitStore.clearStreaks()
     }
-    habitStore.clearHabit()  // Clear the habit
-    setSlipUps(0)  // Reset slip-ups
+    habitStore.clearHabit()
+    setSlipUps(0)
   }
 
   const fillPercentage = slipUps < habitStore.maxSlipUps
@@ -118,10 +133,9 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     ? `Super Streak: ${habitStore.superStreak} days`
     : `Current Streak: ${habitStore.streak} days`
 
-    return (
-      <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
-        <BottomSheetModalProvider>
-        {/* Header with Avatar and Plus Icon */}
+  return (
+    <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
+      <BottomSheetModalProvider>
         <View style={$headerContainer}>
           <View style={$imageContainer}>
             <Image source={require("../../assets/images/Just Give Up Circle Logo.png")} style={$image} />
@@ -137,45 +151,37 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           </View>
         </View>
 
-        {/* Streak Circles */}
-        <ScrollView
-          ref={scrollViewRef}
-          horizontal
-          contentContainerStyle={$streakContainer}
-          showsHorizontalScrollIndicator={false}  // Optional: hide scroll indicator
-        >
-          {habitStore.dayStreak.map((dayData, index) => {
-            const tintColor = getProgressColors(dayData.slipUpCount, dayData.maxSlipUpsForDay);
-            const progress = dayData.slipUpCount <= dayData.maxSlipUpsForDay 
-              ? ((dayData.maxSlipUpsForDay - dayData.slipUpCount) / dayData.maxSlipUpsForDay) * 100 
-              : 0;
-
-            return (
-              <View key={index} style={$dayCard}>
-                <Text text={`Day ${index + 1}`} size="sm" />
-                <AnimatedCircularProgress
-                  size={50}  // Size of the streak circle
-                  width={5}  // Thickness of the progress line
-                  fill={progress}  // Progress percentage
-                  tintColor={tintColor}  // Use centralized color logic
-                  backgroundColor={colors.palette.neutral300}  // Set a solid, neutral background color
-                  rotation={360}  // Make sure the progress is drawn as a circle
-                >
-                  {() => (
-                    <Text text={`${dayData.slipUpCount}/${dayData.maxSlipUpsForDay}`} size="xs" />
-                  )}
-                </AnimatedCircularProgress>
-
-                {/* Conditionally show the fire icon if on a super streak */}
-                {habitStore.superStreak > 0 && (
-                  <Image source={fireIcon} style={$fireIcon} />
+        <View style={$streakWrapper}>
+          <View style={$streakContainer}>
+            {createWeekArray().map((day, index) => (
+              <TouchableOpacity key={index} style={$dayCard} onPress={handleOpenCalendar}>
+                <Text text={day.letter} size="xs" style={$dayLetter} />
+                {day.data ? (
+                  <AnimatedCircularProgress
+                    size={30}
+                    width={3}
+                    fill={day.data.slipUpCount <= day.data.maxSlipUpsForDay 
+                      ? ((day.data.maxSlipUpsForDay - day.data.slipUpCount) / day.data.maxSlipUpsForDay) * 100 
+                      : 0}
+                    tintColor={getProgressColors(day.data.slipUpCount, day.data.maxSlipUpsForDay)}
+                    backgroundColor={colors.palette.neutral300}
+                    rotation={360}
+                  />
+                ) : (
+                  <View style={$placeholderCircle} />
                 )}
-              </View>
-            );
-          })}
-        </ScrollView>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity onPress={handleOpenCalendar} style={$calendarButton}>
+            <MaterialCommunityIcons 
+              name="calendar-month" 
+              size={20} 
+              color={colors.palette.primary600} 
+            />
+          </TouchableOpacity>
+        </View>
 
-        {/* Streak Display */}
         <View style={$streakDisplayContainer}>
           <Text text={streakDisplay} size="lg" weight="bold" />
         </View>
@@ -190,7 +196,6 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
         ) : (
           <View>
             <View>
-              {/* Container for the habit name and the garbage icon */}
               <View style={$headerRow}>
                 <Text text={`${habitName} Tracker`} size="lg" weight="bold" style={$centeredHabitName} />
                 <TouchableOpacity
@@ -200,22 +205,21 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
                   <MaterialCommunityIcons
                     name="trash-can-outline"
                     color={colors.error}
-                    size={24}  // Adjust size if needed
+                    size={24}
                   />
                 </TouchableOpacity>
               </View>
 
-              {/* The Circular Progress */}
               <AnimatedCircularProgress
                 size={200}
                 width={15}
                 fill={fillPercentage}
                 rotation={360}
-                tintColor={getProgressColors(slipUps, habitStore.maxSlipUps)}  // Use centralized color logic
+                tintColor={getProgressColors(slipUps, habitStore.maxSlipUps)}
                 backgroundColor={colors.error}
                 style={$circularProgress}
               >
-                {() => (
+                {(fill) => (
                   <View style={$circularContent}>
                     <Text text={`${slipUps}/${habitStore.maxSlipUps}`} size="xl" />
                     <Text text="Slip-ups" size="sm" />
@@ -237,12 +241,16 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
             </View>
           </View>
         )}
+
+        <CalendarView 
+          bottomSheetModalRef={bottomSheetModalRef}
+          streakData={habitStore.dayStreak}
+        />
       </BottomSheetModalProvider>
     </Screen>
   )
 })
 
-// Styles
 const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
   gap: spacing.md,
@@ -273,23 +281,23 @@ const $headerBtn: ViewStyle = {
 const $image: ImageStyle = {
   width: 50,
   height: 50,
-  borderRadius: 99, // Make the image circular
+  borderRadius: 99,
 }
 
 const $headerRow: ViewStyle = {
-  justifyContent: "center", // Center the habit name
-  position: "relative",     // Necessary for absolute positioning of the trash icon
-  alignItems: "center",      // Center items vertically
+  justifyContent: "center",
+  position: "relative",
+  alignItems: "center",
 }
 
 const $centeredHabitName: TextStyle = {
-  textAlign: "center", // Ensure the habit name is centered
+  textAlign: "center",
 }
 
 const $garbageIcon: ViewStyle = {
-  position: "absolute", // Position the garbage icon absolutely
-  right: 0,             // Align it to the right of the header row
-  padding: spacing.sm,  // Add padding for a better touch area
+  position: "absolute",
+  right: 0,
+  padding: spacing.sm,
 }
 
 const $circularProgress: ViewStyle = {
@@ -326,24 +334,37 @@ const $streakButton: ViewStyle = {
   borderRadius: spacing.sm,
 }
 
-const $streakContainer: ViewStyle = {
+const $streakWrapper: ViewStyle = {
   flexDirection: "row",
-  marginTop: spacing.lg,
+  alignItems: "center",
+  backgroundColor: colors.palette.neutral100,
+  borderRadius: spacing.sm,
+  paddingRight: spacing.xs,
 }
 
-const $fireIcon: ImageStyle = {
-  width: 60,  // Match the size of the streak circle
-  height: 60,  // Match the size of the streak circle
-  position: 'absolute',  // Position it absolutely over the streak circle
-  top: 19,  // Align it to the top
-  left: -3,  // Align it to the left
-};
-
+const $streakContainer: ViewStyle = {
+  flexDirection: "row",
+  paddingVertical: spacing.xs,
+  paddingHorizontal: spacing.md,
+  flex: 1,
+  justifyContent: "space-between",
+}
 
 const $dayCard: ViewStyle = {
-  alignItems: "center",  // Center the text and circle
-  margin: spacing.sm,    // Add spacing around each streak circle
-};
+  alignItems: "center",
+  gap: spacing.xs,
+  width: 40, // Fixed width for each day
+}
+
+const $dayLetter: TextStyle = {
+  color: colors.textDim,
+}
+
+const $streakDisplayContainer: ViewStyle = {
+  justifyContent: "center",
+  alignItems: "center",
+  marginVertical: spacing.md,
+}
 
 const $addHabitContainer: ViewStyle = {
   justifyContent: "center",
@@ -358,12 +379,17 @@ const $addHabitButton: ViewStyle = {
   borderRadius: spacing.sm,
 }
 
-const $streakDisplayContainer: ViewStyle = {
-  justifyContent: "center",
-  alignItems: "center",
-  marginVertical: spacing.md,
-}
-
 const $buttonText: TextStyle = {
   color: colors.palette.neutral100,
+}
+
+const $calendarButton: ViewStyle = {
+  padding: spacing.xs,
+  marginLeft: spacing.xs,
+}
+
+const $placeholderCircle: ViewStyle = {
+  width: 30,
+  height: 30,
+  opacity: 0,
 }

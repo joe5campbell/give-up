@@ -1,12 +1,15 @@
 import { makeAutoObservable, runInAction } from "mobx"
+import { format, addDays } from "date-fns"
 import * as storage from "../utils/storage"
 
 const STORAGE_KEY = "HABIT_STORE"
+const START_DATE = new Date(2024, 0, 1) // January 1st, 2024
 
 interface DayStreak {
   slipUpCount: number
   maxSlipUpsForDay: number
-  date: string
+  date: string  // ISO string format
+  displayDay: number // 1-based day number for display
 }
 
 interface HabitStore {
@@ -48,8 +51,8 @@ export class HabitStoreModel {
 
   private async loadPersistedData() {
     try {
-      // Use type assertion here since storage.load returns unknown
       const savedData = (await storage.load(STORAGE_KEY)) as HabitStore | null
+      
       if (savedData && this.isValidHabitStore(savedData)) {
         runInAction(() => {
           this.habitName = savedData.habitName
@@ -67,7 +70,6 @@ export class HabitStoreModel {
     }
   }
 
-  // Type guard to ensure the loaded data matches our HabitStore interface
   private isValidHabitStore(data: unknown): data is HabitStore {
     const store = data as HabitStore
     return (
@@ -87,7 +89,8 @@ export class HabitStoreModel {
           day !== null &&
           typeof day.slipUpCount === "number" &&
           typeof day.maxSlipUpsForDay === "number" &&
-          typeof day.date === "string"
+          typeof day.date === "string" &&
+          typeof day.displayDay === "number"
       )
     )
   }
@@ -110,6 +113,14 @@ export class HabitStoreModel {
     }
   }
 
+  // Helper method to get the next date based on streak length
+  private getNextDate(): Date {
+    if (this.dayStreak.length === 0) {
+      return START_DATE
+    }
+    return addDays(START_DATE, this.dayStreak.length)
+  }
+
   setHabitName(name: string) {
     this.habitName = name
     this.persistData()
@@ -126,13 +137,15 @@ export class HabitStoreModel {
   }
 
   resetDailySlipUps(slipUpCount: number) {
-    const today = new Date().toISOString().split('T')[0]
-    
+    const nextDate = this.getNextDate()
+    const displayDay = this.dayStreak.length + 1
+
     // Add new day to streak
     this.dayStreak.push({
       slipUpCount,
       maxSlipUpsForDay: this.maxSlipUps,
-      date: today
+      date: format(nextDate, 'yyyy-MM-dd'),
+      displayDay
     })
 
     // Update streak counts
@@ -149,6 +162,12 @@ export class HabitStoreModel {
     }
 
     this.persistData()
+  }
+
+  // Get formatted date string for a specific day
+  getDateForDay(dayNumber: number): string {
+    const date = addDays(START_DATE, dayNumber - 1)
+    return format(date, 'MMM d') // Returns format like "Jan 1"
   }
 
   clearStreaks() {

@@ -1,5 +1,3 @@
-// TODO: write documentation for colors and palette in own markdown file and add links from here
-
 const palette = {
   neutral100: "#FFFFFF",
   neutral200: "#F4F2F1",
@@ -32,6 +30,12 @@ const palette = {
 
   angry100: "#F2D6CD",
   angry500: "#C03403",
+
+  gold100: "#FFF7E6",
+  gold200: "#FFE7B3",
+  gold300: "#FFD780",
+  gold400: "#FFC94D",
+  gold500: "#FFB61A",  // Main gold color for super streaks
 
   success: "#56C568",
 
@@ -87,4 +91,8 @@ export const colors = {
    * Success messages
    */
   success: palette.success,
+  /**
+   * Super streak color
+   */
+  superStreak: palette.gold500,
 }
