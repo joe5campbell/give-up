@@ -32,47 +32,46 @@ const getProgressColors = (slipUps: number, maxSlipUps: number) => {
   }
 }
 
-const createWeekArray = () => {
-  // Define the days of the week starting from Monday
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+// New helper to get current streak dates
+const getCurrentStreakDates = () => {
+  const currentStreak = []
+  for (let i = habitStore.dayStreak.length - 1; i >= 0; i--) {
+    const day = habitStore.dayStreak[i]
+    if (day.slipUpCount > habitStore.maxSlipUps) break
+    currentStreak.unshift(day.date)
+  }
+  return currentStreak
+}
 
-  // Use the current date from habitStore
-  const today = habitStore.getNextDate();
-  
-  // Calculate the start of the week, adjusting for Mondays to show the previous week
-  const startOfWeek = new Date(today);
-  const dayOfWeek = today.getDay();
-  
-  // If today is Monday, set start of week to the previous Monday
+const createWeekArray = (currentStreakDates: string[]) => {
+  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+  const today = habitStore.getNextDate()
+  const startOfWeek = new Date(today)
+  const dayOfWeek = today.getDay()
+
   if (dayOfWeek === 1) {
-    startOfWeek.setDate(today.getDate() - 7);
+    startOfWeek.setDate(today.getDate() - 7)
   } else {
-    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    startOfWeek.setDate(today.getDate() + daysToMonday);
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+    startOfWeek.setDate(today.getDate() + daysToMonday)
   }
 
-  // Create the array for the current or previous week up to today
   return days.map((day, index) => {
-    const currentDay = new Date(startOfWeek);
-    currentDay.setDate(startOfWeek.getDate() + index);
-    
-    // Only show days up to today
-    if (currentDay <= today) {
-      const dayData = habitStore.dayStreak.find(
-        (streakDay) => new Date(streakDay.date).toDateString() === currentDay.toDateString()
-      );
-      return {
-        letter: day,
-        data: dayData || null, // Use dayData if it exists, otherwise null
-      };
-    } else {
-      return {
-        letter: day,
-        data: null, // Future days are left empty
-      };
+    const currentDay = new Date(startOfWeek)
+    currentDay.setDate(startOfWeek.getDate() + index)
+    const dateString = currentDay.toISOString().split('T')[0]
+    const dayData = habitStore.dayStreak.find(
+      (streakDay) => streakDay.date === dateString
+    )
+    const isInCurrentStreak = currentStreakDates.includes(dateString)
+
+    return {
+      letter: day,
+      data: dayData || null,
+      isInCurrentStreak,
     }
-  });
-};
+  })
+}
 
 interface HomeScreenProps {
   navigation: any
@@ -82,10 +81,15 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
   const [slipUps, setSlipUps] = useState(0)
   const scrollViewRef = useRef<ScrollView>(null)
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
+  const [currentStreakDates, setCurrentStreakDates] = useState<string[]>([])
 
   const handleOpenCalendar = () => {
     bottomSheetModalRef.current?.present()
   }
+
+  useEffect(() => {
+    setCurrentStreakDates(getCurrentStreakDates())
+  }, [habitStore.dayStreak.length])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -180,13 +184,13 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
         <View style={$streakWrapper}>
           <View style={$streakContainer}>
-            {createWeekArray().map((day, index) => (
+            {createWeekArray(currentStreakDates).map((day, index) => (
               <TouchableOpacity key={index} style={$dayCard} onPress={handleOpenCalendar}>
                 <Text text={day.letter} size="xs" style={$dayLetter} />
                 {day.data ? (
                   <AnimatedCircularProgress
                     size={30}
-                    width={3}
+                    width={day.isInCurrentStreak ? 8 : 3}  // Thicker width for current streak
                     fill={day.data.slipUpCount <= day.data.maxSlipUpsForDay 
                       ? ((day.data.maxSlipUpsForDay - day.data.slipUpCount) / day.data.maxSlipUpsForDay) * 100 
                       : 0}

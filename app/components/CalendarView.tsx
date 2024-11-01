@@ -154,7 +154,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bottomSheetModalRef,
               
               // Check if the date is part of the current streak
               const isInCurrentStreak = currentStreakDates.includes(dateString)
-              const circleWidth = isInCurrentStreak ? 9 : 2 
+              const circleWidth = isInCurrentStreak ? 8 : 2 
 
               return (
                 <TouchableOpacity
