@@ -114,7 +114,7 @@ export class HabitStoreModel {
   }
 
   // Helper method to get the next date based on streak length
-  private getNextDate(): Date {
+  public getNextDate(): Date {
     if (this.dayStreak.length === 0) {
       return START_DATE
     }

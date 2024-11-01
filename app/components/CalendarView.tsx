@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react"
+import React, { useState, useCallback, useMemo, useEffect } from "react"
 import {
   View,
   ViewStyle,
@@ -10,7 +10,9 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet"
 import { AnimatedCircularProgress } from "react-native-circular-progress"
 import { Text } from "app/components"
 import { colors, spacing } from "app/theme"
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns"
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, parseISO } from "date-fns"
+import { habitStore } from "app/store/habit-store"
+import { reaction } from "mobx"
 
 interface CalendarViewProps {
   bottomSheetModalRef: React.RefObject<BottomSheetModal>
@@ -29,9 +31,37 @@ interface DayDetailPopup {
   y: number
 }
 
+// Get the latest date in habitStore.dayStreak
+const getLatestDate = () => {
+  const lastDayStreak = habitStore.dayStreak[habitStore.dayStreak.length - 1]
+  return lastDayStreak ? parseISO(lastDayStreak.date) : new Date()
+}
+
+// Helper to identify dates in the current streak
+const getCurrentStreakDates = () => {
+  const currentStreak = []
+  for (let i = habitStore.dayStreak.length - 1; i >= 0; i--) {
+    const day = habitStore.dayStreak[i]
+    if (day.slipUpCount > habitStore.maxSlipUps) break
+    currentStreak.unshift(day.date)
+  }
+  return currentStreak
+}
+
 export const CalendarView: React.FC<CalendarViewProps> = ({ bottomSheetModalRef, streakData }) => {
-  const [selectedMonth] = useState(new Date(2024, 0, 1)) // Start from January 2024
+  const [selectedMonth, setSelectedMonth] = useState(getLatestDate()) 
   const [dayDetailPopup, setDayDetailPopup] = useState<DayDetailPopup | null>(null)
+  const [currentStreakDates, setCurrentStreakDates] = useState<string[]>([])
+
+  // Update current streak dates when dayStreak changes
+  useEffect(() => {
+    const disposeReaction = reaction(
+      () => habitStore.dayStreak.length,
+      () => setCurrentStreakDates(getCurrentStreakDates())
+    )
+    setCurrentStreakDates(getCurrentStreakDates())
+    return () => disposeReaction()
+  }, [])
 
   // Get calendar days for current month with Monday start
   const calendarDays = useMemo(() => {
@@ -39,7 +69,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bottomSheetModalRef,
     const end = endOfMonth(selectedMonth)
     const days = eachDayOfInterval({ start, end })
 
-    // Adjust for Monday start (Monday = 1, Sunday = 0)
     const firstDayOfWeek = getDay(start)
     const mondayAdjustedDay = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1
     const emptyDays = Array(mondayAdjustedDay).fill(null)
@@ -74,6 +103,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bottomSheetModalRef,
     })
   }
 
+  // Navigate to previous and next months
+  const handlePreviousMonth = () => {
+    setSelectedMonth((prev) => subMonths(prev, 1))
+  }
+  const handleNextMonth = () => {
+    setSelectedMonth((prev) => addMonths(prev, 1))
+  }
+
   const renderWeekHeader = () => (
     <View style={$weekHeader}>
       {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
@@ -89,7 +126,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bottomSheetModalRef,
       index={0}
     >
       <View style={$container}>
-        <Text text={format(selectedMonth, 'MMMM yyyy')} style={$monthHeader} />
+        {/* Month Navigation */}
+        <View style={$monthNavigation}>
+          <TouchableOpacity onPress={handlePreviousMonth}>
+            <Text text="<" style={$navButton} />
+          </TouchableOpacity>
+          <Text text={format(selectedMonth, 'MMMM yyyy')} style={$monthHeader} />
+          <TouchableOpacity onPress={handleNextMonth}>
+            <Text text=">" style={$navButton} />
+          </TouchableOpacity>
+        </View>
         
         {renderWeekHeader()}
 
@@ -102,8 +148,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bottomSheetModalRef,
 
               const dateString = format(day, 'yyyy-MM-dd')
               const dayData = streakData.find(d => d.date === dateString)
-              const progress = dayData ? 
-                ((dayData.maxSlipUpsForDay - dayData.slipUpCount) / dayData.maxSlipUpsForDay) * 100 : 0
+              const progress = dayData 
+                ? ((dayData.maxSlipUpsForDay - dayData.slipUpCount) / dayData.maxSlipUpsForDay) * 100 
+                : 0
+              
+              // Check if the date is part of the current streak
+              const isInCurrentStreak = currentStreakDates.includes(dateString)
+              const circleWidth = isInCurrentStreak ? 9 : 2 
 
               return (
                 <TouchableOpacity
@@ -117,11 +168,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bottomSheetModalRef,
                       {dayData ? (
                         <AnimatedCircularProgress
                           size={24}
-                          width={2}
+                          width={circleWidth}
                           fill={progress}
                           tintColor={getProgressColors(dayData.slipUpCount, dayData.maxSlipUpsForDay)}
                           backgroundColor={colors.palette.neutral300}
                           rotation={360}
+                          style={{ marginTop: -1 }} // Small tweak to vertically align
                         />
                       ) : (
                         <View style={$placeholderCircle} />
@@ -163,9 +215,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bottomSheetModalRef,
   )
 }
 
+
 const $container: ViewStyle = {
   flex: 1,
   padding: spacing.md,
+}
+
+const $monthNavigation: ViewStyle = {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  paddingHorizontal: spacing.md,
+  marginBottom: spacing.sm,
+}
+
+const $navButton: TextStyle = {
+  fontSize: 20,
+  color: colors.palette.primary600,
 }
 
 const $monthHeader: TextStyle = {
@@ -204,16 +270,21 @@ const $dayContent: ViewStyle = {
   flex: 1,
   alignItems: "center",
   justifyContent: "center",
-  gap: spacing.xs,
+  flexDirection: "column",
+  padding: 0,
 }
 
 const $dayText: TextStyle = {
   color: colors.text,
+  textAlign: "center", // Ensure the number is centered within the day cell
 }
 
 const $circleContainer: ViewStyle = {
-  height: 24,
+  width: 24, // Match this with the size of the circle
+  height: 24, // Match height to width for perfect centering
+  alignItems: "center",
   justifyContent: "center",
+  marginLeft: -3, // Slight nudge to the left for better centering
 }
 
 const $placeholderCircle: ViewStyle = {

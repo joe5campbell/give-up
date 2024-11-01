@@ -33,19 +33,46 @@ const getProgressColors = (slipUps: number, maxSlipUps: number) => {
 }
 
 const createWeekArray = () => {
-  // European style (Monday first)
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-  const recentDays = habitStore.dayStreak.slice(-7)
+  // Define the days of the week starting from Monday
+  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  // Use the current date from habitStore
+  const today = habitStore.getNextDate();
   
-  // Create array with fixed positions for each day
+  // Calculate the start of the week, adjusting for Mondays to show the previous week
+  const startOfWeek = new Date(today);
+  const dayOfWeek = today.getDay();
+  
+  // If today is Monday, set start of week to the previous Monday
+  if (dayOfWeek === 1) {
+    startOfWeek.setDate(today.getDate() - 7);
+  } else {
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    startOfWeek.setDate(today.getDate() + daysToMonday);
+  }
+
+  // Create the array for the current or previous week up to today
   return days.map((day, index) => {
-    const dayData = recentDays[index]
-    return {
-      letter: day,
-      data: dayData
+    const currentDay = new Date(startOfWeek);
+    currentDay.setDate(startOfWeek.getDate() + index);
+    
+    // Only show days up to today
+    if (currentDay <= today) {
+      const dayData = habitStore.dayStreak.find(
+        (streakDay) => new Date(streakDay.date).toDateString() === currentDay.toDateString()
+      );
+      return {
+        letter: day,
+        data: dayData || null, // Use dayData if it exists, otherwise null
+      };
+    } else {
+      return {
+        letter: day,
+        data: null, // Future days are left empty
+      };
     }
-  })
-}
+  });
+};
 
 interface HomeScreenProps {
   navigation: any
