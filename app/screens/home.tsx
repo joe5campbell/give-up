@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useState, useRef } from "react"
+import React, { FC, useState, useRef, useEffect } from "react"  // Added useEffect
 import {
   View,
   Image,
@@ -38,27 +38,33 @@ const fireIcon = require("../../assets/images/fire_ring_2.webp")
 
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
   const [slipUps, setSlipUps] = useState(0)
-
-  // Add reference to ScrollView for auto-scrolling
   const scrollViewRef = useRef<ScrollView>(null)
+
+  useEffect(() => {
+    // Short delay to ensure the ScrollView has rendered with its content
+    const timer = setTimeout(() => {
+      if (scrollViewRef.current && habitStore.dayStreak.length > 0) {
+        scrollViewRef.current.scrollToEnd({ animated: true })
+      }
+    }, 100) // Slightly longer timeout for initial load
+
+    return () => clearTimeout(timer) // Cleanup timeout
+  }, []) // Empty dependency array means this runs once on mount
+
 
   const increaseSlipUps = () => {
     setSlipUps(slipUps + 1)
   }
 
   const addCurrentDayToStreak = () => {
-    // Update streaks in the store based on the number of slip-ups
     habitStore.resetDailySlipUps(slipUps)
-
-    // Reset slip-ups counter for the next day
     setSlipUps(0)
 
-    // Scroll to the right after adding a new streak
     setTimeout(() => {
       if (scrollViewRef.current) {
-        scrollViewRef.current.scrollToEnd({ animated: true })  // Auto-scroll to the end of the ScrollView
+        scrollViewRef.current.scrollToEnd({ animated: true })
       }
-    }, 10) // Increase the timeout slightly to ensure UI updates
+    }, 10)
   }
 
   // Function to handle the garbage can click with streak confirmation
@@ -112,9 +118,9 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
     ? `Super Streak: ${habitStore.superStreak} days`
     : `Current Streak: ${habitStore.streak} days`
 
-  return (
-    <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
-      <BottomSheetModalProvider>
+    return (
+      <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
+        <BottomSheetModalProvider>
         {/* Header with Avatar and Plus Icon */}
         <View style={$headerContainer}>
           <View style={$imageContainer}>
@@ -133,9 +139,10 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
         {/* Streak Circles */}
         <ScrollView
-          ref={scrollViewRef}  // Attach ref to the ScrollView
+          ref={scrollViewRef}
           horizontal
           contentContainerStyle={$streakContainer}
+          showsHorizontalScrollIndicator={false}  // Optional: hide scroll indicator
         >
           {habitStore.dayStreak.map((dayData, index) => {
             const tintColor = getProgressColors(dayData.slipUpCount, dayData.maxSlipUpsForDay);
