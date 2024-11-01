@@ -207,7 +207,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           <TouchableOpacity onPress={handleOpenCalendar} style={$calendarButton}>
             <MaterialCommunityIcons 
               name="calendar-month" 
-              size={20} 
+              size={24} 
               color={colors.palette.primary600} 
             />
           </TouchableOpacity>
@@ -366,25 +366,28 @@ const $streakButton: ViewStyle = {
 }
 
 const $streakWrapper: ViewStyle = {
+  position: "relative", // Enables absolute positioning within
   flexDirection: "row",
   alignItems: "center",
   backgroundColor: colors.palette.neutral100,
   borderRadius: spacing.sm,
-  paddingRight: spacing.xs,
+  paddingRight: spacing.sm,
+  paddingLeft: spacing.xs,
+  paddingVertical: spacing.xs, // Adjust as needed for padding around items
 }
 
 const $streakContainer: ViewStyle = {
   flexDirection: "row",
-  paddingVertical: spacing.xs,
-  paddingHorizontal: spacing.md,
+  justifyContent: "flex-start", // Align items to the left
+  paddingHorizontal: spacing.sm,
+  right: spacing.sm,
   flex: 1,
-  justifyContent: "space-between",
 }
 
 const $dayCard: ViewStyle = {
   alignItems: "center",
-  gap: spacing.xs,
-  width: 40, // Fixed width for each day
+  gap: spacing.xxs,
+  width:37, // Fixed width for each day
 }
 
 const $dayLetter: TextStyle = {
@@ -415,7 +418,7 @@ const $buttonText: TextStyle = {
 }
 
 const $calendarButton: ViewStyle = {
-  padding: spacing.xs,
+  padding: spacing.xxxs,
   marginLeft: spacing.xs,
 }
 
