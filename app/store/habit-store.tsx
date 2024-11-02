@@ -1,48 +1,48 @@
 import { makeAutoObservable, runInAction } from "mobx"
-import { format, addDays } from "date-fns"
+import { format, addDays, parseISO, isAfter, isBefore, eachDayOfInterval } from "date-fns"
 import * as storage from "../utils/storage"
 
 const STORAGE_KEY = "HABIT_STORE"
-const START_DATE = new Date(2024, 0, 1) // January 1st, 2024
+const DEV_MODE = true
 
-interface DayStreak {
-  slipUpCount: number
-  maxSlipUpsForDay: number
-  date: string  // ISO string format
-  displayDay: number // 1-based day number for display
+interface SlipUpHistory {
+  [date: string]: {
+    count: number
+    maxAllowed: number
+  }
 }
 
 interface HabitStore {
   habitName: string
   description: string
   maxSlipUps: number
-  dayStreak: DayStreak[]
-  streak: number
-  superStreak: number
-  hasSeenStreakPrompt: boolean
-  hasSelectedClearHabit: boolean
+  slipUpHistory: SlipUpHistory
+  startDate: string          // Jan 1, 2024 for development purposes
+  trackingStartDate: string  // When this specific habit tracking began
+  daysOffset: number
+  developmentMode: boolean
 }
 
 const createInitialState = (): HabitStore => ({
   habitName: "",
   description: "",
   maxSlipUps: 3,
-  dayStreak: [],
-  streak: 0,
-  superStreak: 0,
-  hasSeenStreakPrompt: false,
-  hasSelectedClearHabit: false,
+  slipUpHistory: {},
+  startDate: format(new Date(2024, 0, 1), 'yyyy-MM-dd'),
+  trackingStartDate: format(new Date(2024, 0, 1), 'yyyy-MM-dd'),
+  daysOffset: 0,
+  developmentMode: DEV_MODE
 })
 
 export class HabitStoreModel {
   habitName: string = ""
   description: string = ""
   maxSlipUps: number = 3
-  dayStreak: DayStreak[] = []
-  streak: number = 0
-  superStreak: number = 0
-  hasSeenStreakPrompt: boolean = false
-  hasSelectedClearHabit: boolean = false
+  slipUpHistory: SlipUpHistory = {}
+  startDate: string = format(new Date(2024, 0, 1), 'yyyy-MM-dd')
+  trackingStartDate: string = format(new Date(2024, 0, 1), 'yyyy-MM-dd')
+  daysOffset: number = 0
+  developmentMode: boolean = DEV_MODE
 
   constructor() {
     makeAutoObservable(this)
@@ -51,18 +51,18 @@ export class HabitStoreModel {
 
   private async loadPersistedData() {
     try {
-      const savedData = (await storage.load(STORAGE_KEY)) as HabitStore | null
+      const savedData = await storage.load(STORAGE_KEY) as HabitStore | null
       
       if (savedData && this.isValidHabitStore(savedData)) {
         runInAction(() => {
           this.habitName = savedData.habitName
           this.description = savedData.description
           this.maxSlipUps = savedData.maxSlipUps
-          this.dayStreak = savedData.dayStreak
-          this.streak = savedData.streak
-          this.superStreak = savedData.superStreak
-          this.hasSeenStreakPrompt = savedData.hasSeenStreakPrompt
-          this.hasSelectedClearHabit = savedData.hasSelectedClearHabit
+          this.slipUpHistory = savedData.slipUpHistory
+          this.startDate = savedData.startDate
+          this.trackingStartDate = savedData.trackingStartDate
+          this.daysOffset = savedData.daysOffset
+          this.developmentMode = savedData.developmentMode
         })
       }
     } catch (error) {
@@ -78,20 +78,11 @@ export class HabitStoreModel {
       typeof store.habitName === "string" &&
       typeof store.description === "string" &&
       typeof store.maxSlipUps === "number" &&
-      Array.isArray(store.dayStreak) &&
-      typeof store.streak === "number" &&
-      typeof store.superStreak === "number" &&
-      typeof store.hasSeenStreakPrompt === "boolean" &&
-      typeof store.hasSelectedClearHabit === "boolean" &&
-      store.dayStreak.every(
-        (day): day is DayStreak =>
-          typeof day === "object" &&
-          day !== null &&
-          typeof day.slipUpCount === "number" &&
-          typeof day.maxSlipUpsForDay === "number" &&
-          typeof day.date === "string" &&
-          typeof day.displayDay === "number"
-      )
+      typeof store.slipUpHistory === "object" &&
+      typeof store.startDate === "string" &&
+      typeof store.trackingStartDate === "string" &&
+      typeof store.daysOffset === "number" &&
+      typeof store.developmentMode === "boolean"
     )
   }
 
@@ -101,11 +92,11 @@ export class HabitStoreModel {
         habitName: this.habitName,
         description: this.description,
         maxSlipUps: this.maxSlipUps,
-        dayStreak: this.dayStreak,
-        streak: this.streak,
-        superStreak: this.superStreak,
-        hasSeenStreakPrompt: this.hasSeenStreakPrompt,
-        hasSelectedClearHabit: this.hasSelectedClearHabit,
+        slipUpHistory: this.slipUpHistory,
+        startDate: this.startDate,
+        trackingStartDate: this.trackingStartDate,
+        daysOffset: this.daysOffset,
+        developmentMode: this.developmentMode
       }
       await storage.save(STORAGE_KEY, dataToSave)
     } catch (error) {
@@ -113,12 +104,137 @@ export class HabitStoreModel {
     }
   }
 
-  // Helper method to get the next date based on streak length
-  public getNextDate(): Date {
-    if (this.dayStreak.length === 0) {
-      return START_DATE
+  getEffectiveDate(): Date {
+    const currentDate = new Date()
+    return this.developmentMode 
+      ? addDays(currentDate, this.daysOffset)
+      : currentDate
+  }
+
+  // Return false for dates before tracking started
+  isDateBeforeToday(date: string): boolean {
+    const todayStart = this.getEffectiveDate()
+    todayStart.setHours(0, 0, 0, 0)
+    const checkDate = parseISO(date)
+    return isBefore(checkDate, todayStart) && !isBefore(checkDate, parseISO(this.trackingStartDate))
+  }
+
+  // Find the most recent streak break date
+  private getLastStreakBreakDate(): string {
+    const currentDate = addDays(this.getEffectiveDate(), -1) // Start from yesterday
+    let checkDate = format(currentDate, 'yyyy-MM-dd')
+    
+    while (!isBefore(parseISO(checkDate), parseISO(this.trackingStartDate))) {
+      const slipUps = this.getSlipUpsForDate(checkDate)
+      const maxAllowed = this.getMaxSlipUpsForDate(checkDate)
+      
+      if (slipUps > maxAllowed) {
+        return checkDate
+      }
+      checkDate = format(addDays(parseISO(checkDate), -1), 'yyyy-MM-dd')
     }
-    return addDays(START_DATE, this.dayStreak.length)
+    
+    return this.trackingStartDate
+  }
+
+  isDateInCurrentStreak(date: string): boolean {
+    if (!this.isDateBeforeToday(date)) return false
+    
+    const lastBreakDate = this.getLastStreakBreakDate()
+    const checkDate = parseISO(date)
+    const breakDate = parseISO(lastBreakDate)
+    
+    // If after last break and before today, check if it maintained streak
+    if (isAfter(checkDate, breakDate)) {
+      const slipUps = this.getSlipUpsForDate(date)
+      const maxAllowed = this.getMaxSlipUpsForDate(date)
+      return slipUps <= maxAllowed
+    }
+    
+    return false
+  }
+
+  incrementSlipUpCount() {
+    const currentDate = format(this.getEffectiveDate(), 'yyyy-MM-dd')
+    
+    if (!this.slipUpHistory[currentDate]) {
+      this.slipUpHistory[currentDate] = {
+        count: 1,
+        maxAllowed: this.maxSlipUps
+      }
+    } else {
+      this.slipUpHistory[currentDate].count++
+    }
+
+    this.persistData()
+  }
+
+  getSlipUpsForDate(date: string): number {
+    return this.slipUpHistory[date]?.count ?? 0
+  }
+
+  getMaxSlipUpsForDate(date: string): number {
+    return this.slipUpHistory[date]?.maxAllowed ?? this.maxSlipUps
+  }
+
+  get streak(): number {
+    let currentStreak = 0
+    const currentDate = addDays(this.getEffectiveDate(), -1)  // Start from yesterday
+    let checkDate = format(currentDate, 'yyyy-MM-dd')
+
+    while (!isBefore(parseISO(checkDate), parseISO(this.trackingStartDate))) {
+      const slipUps = this.getSlipUpsForDate(checkDate)
+      const maxAllowed = this.getMaxSlipUpsForDate(checkDate)
+
+      if (slipUps > maxAllowed) break
+      currentStreak++
+      checkDate = format(addDays(parseISO(checkDate), -1), 'yyyy-MM-dd')
+    }
+
+    return currentStreak
+  }
+
+  get superStreak(): number {
+    let superStreak = 0
+    const currentDate = addDays(this.getEffectiveDate(), -1)  // Start from yesterday
+    let checkDate = format(currentDate, 'yyyy-MM-dd')
+
+    while (!isBefore(parseISO(checkDate), parseISO(this.trackingStartDate))) {
+      const slipUps = this.getSlipUpsForDate(checkDate)
+      if (slipUps !== 0) break
+      superStreak++
+      checkDate = format(addDays(parseISO(checkDate), -1), 'yyyy-MM-dd')
+    }
+
+    return superStreak
+  }
+
+  getStreakData() {
+    const start = parseISO(this.trackingStartDate)
+    const end = this.getEffectiveDate()
+    const days = eachDayOfInterval({ start, end })
+
+    return days.map(date => {
+      const dateStr = format(date, 'yyyy-MM-dd')
+      return {
+        date: dateStr,
+        slipUpCount: this.getSlipUpsForDate(dateStr),
+        maxSlipUpsForDay: this.getMaxSlipUpsForDate(dateStr),
+        isInCurrentStreak: this.isDateInCurrentStreak(dateStr)
+      }
+    })
+  }
+
+  addTestDay() {
+    if (this.developmentMode) {
+      this.daysOffset += 1
+      this.persistData()
+    }
+  }
+
+  setDevelopmentMode(enabled: boolean) {
+    this.developmentMode = enabled
+    this.persistData()
   }
 
   setHabitName(name: string) {
@@ -136,49 +252,21 @@ export class HabitStoreModel {
     this.persistData()
   }
 
-  resetDailySlipUps(slipUpCount: number) {
-    const nextDate = this.getNextDate()
-    const displayDay = this.dayStreak.length + 1
-
-    // Add new day to streak
-    this.dayStreak.push({
-      slipUpCount,
-      maxSlipUpsForDay: this.maxSlipUps,
-      date: format(nextDate, 'yyyy-MM-dd'),
-      displayDay
-    })
-
-    // Update streak counts
-    if (slipUpCount <= this.maxSlipUps) {
-      this.streak += 1
-      if (slipUpCount === 0) {
-        this.superStreak += 1
-      } else {
-        this.superStreak = 0
-      }
-    } else {
-      this.streak = 0
-      this.superStreak = 0
-    }
-
+  setTrackingStartDate(date: string) {
+    this.trackingStartDate = date
     this.persistData()
   }
 
-  // Get formatted date string for a specific day
-  getDateForDay(dayNumber: number): string {
-    const date = addDays(START_DATE, dayNumber - 1)
-    return format(date, 'MMM d') // Returns format like "Jan 1"
-  }
-
-  clearStreaks() {
-    this.dayStreak = []
-    this.streak = 0
-    this.superStreak = 0
+  restoreHistory(history: SlipUpHistory, trackingStartDate: string) {
+    this.slipUpHistory = history
+    this.trackingStartDate = trackingStartDate
     this.persistData()
   }
 
   clearHabit() {
-    Object.assign(this, createInitialState())
+    const newState = createInitialState()
+    newState.trackingStartDate = format(this.getEffectiveDate(), 'yyyy-MM-dd')
+    Object.assign(this, newState)
     this.persistData()
   }
 }

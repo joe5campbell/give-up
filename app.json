@@ -7,9 +7,9 @@
     "scheme": "giveup",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Just Give Up Circle Logo.png",
+    "icon": "../assets/images/Just Give Up Circle Logo.png",
     "splash": {
-      "image": "./assets/images/Just Give Up Circle Logo.png",
+      "image": "../assets/images/Just Give Up Circle Logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#191015"
     },
@@ -19,33 +19,33 @@
     "jsEngine": "hermes",
     "assetBundlePatterns": ["**/*"],
     "android": {
-      "icon": "./assets/images/app-icon-android-legacy.png",
+      "icon": ".../assets/images/Just Give Up Circle Logo.png",
       "package": "com.giveup",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
         "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
       },
       "splash": {
-        "image": "./assets/images/splash-logo-android-universal.png",
+        "image": "../assets/images/Just Give Up Circle Logo.png",
         "resizeMode": "contain",
         "backgroundColor": "#191015"
       }
     },
     "ios": {
-      "icon": "./assets/images/app-icon-ios.png",
+      "icon": "../assets/images/Just Give Up Circle Logo.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.giveup",
       "splash": {
-        "image": "./assets/images/splash-logo-ios-mobile.png",
-        "tabletImage": "./assets/images/splash-logo-ios-tablet.png",
+        "image": "../assets/images/Just Give Up Circle Logo.png",
+        "tabletImage": "../assets/images/Just Give Up Circle Logo.png",
         "resizeMode": "contain",
         "backgroundColor": "#191015"
       }
     },
     "web": {
-      "favicon": "./assets/images/app-icon-web-favicon.png",
+      "favicon": "../assets/images/Just Give Up Circle Logo.png",
       "splash": {
-        "image": "./assets/images/splash-logo-web.png",
+        "image": "../assets/images/Just Give Up Circle Logo.png",
         "resizeMode": "contain",
         "backgroundColor": "#191015"
       },

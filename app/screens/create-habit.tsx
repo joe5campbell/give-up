@@ -1,23 +1,27 @@
 import React, { useState } from "react"
 import { View, TextInput, ViewStyle, TextStyle, Alert } from "react-native"
-import { RouteProp } from '@react-navigation/native';
+import { NavigationProp, RouteProp } from "@react-navigation/native"
 import { Text, Button, Screen } from "app/components"
 import { colors, spacing } from "../theme"
-import { HomeStackScreenProps, HomeStackParamList } from "../navigators/types"
+import { HomeStackParamList } from "../navigators/types"
 import { habitStore } from "app/store/habit-store"
 
-export const CreateHabitScreen = ({ navigation, route }: HomeStackScreenProps<"CreateHabit">) => {
+interface CreateHabitScreenProps {
+  navigation: NavigationProp<HomeStackParamList>
+  route: RouteProp<HomeStackParamList, "CreateHabit">
+}
+
+export const CreateHabitScreen = ({ navigation, route }: CreateHabitScreenProps) => {
   const [habitName, setHabitName] = useState("")
   const [description, setDescription] = useState("")
-  const [maxSlipUps, setMaxSlipUps] = useState("")  // New state for max slip-ups
+  const [maxSlipUps, setMaxSlipUps] = useState("")
 
-  const { params } = route as unknown as RouteProp<HomeStackParamList, "CreateHabit">;
-  const hasAcknowledgedStreak = params?.hasAcknowledgedStreak ?? false;
-  const hasSelectedClearHabit = params?.hasSelectedClearHabit ?? false;
+  const hasAcknowledgedStreak = route.params?.hasAcknowledgedStreak ?? false
+  const hasSelectedClearHabit = route.params?.hasSelectedClearHabit ?? false
 
   // Function to handle the habit creation process
   const handleCreateHabit = () => {
-    if (habitStore.dayStreak.length > 0 && !hasAcknowledgedStreak) {
+    if (Object.keys(habitStore.slipUpHistory).length > 0 && !hasAcknowledgedStreak) {
       // Show confirmation pop-up if streaks exist and haven't been acknowledged
       showStreakResetConfirmation()
     } else {
@@ -26,16 +30,28 @@ export const CreateHabitScreen = ({ navigation, route }: HomeStackScreenProps<"C
     }
   }
 
-  // Function to save the habit and reset streaks if required
+  // Function to save the habit and handle streak data
   const saveHabit = (resetStreak: boolean) => {
     if (habitName.trim() && maxSlipUps.trim()) {
+      // Store the current slip-up history if we're keeping the streak
+      const existingHistory = !resetStreak ? { ...habitStore.slipUpHistory } : {}
+      const trackingStartDate = habitStore.trackingStartDate;
+
+      
+      // Clear the store (this resets everything)
+      habitStore.clearHabit()
+      
+      // Set the new habit details
       habitStore.setHabitName(habitName)
       habitStore.setDescription(description)
-      habitStore.setMaxSlipUps(parseInt(maxSlipUps))  // Store max slip-ups
-      if (resetStreak) {
-        habitStore.clearStreaks()  // Clear streaks if reset is confirmed
+      habitStore.setMaxSlipUps(parseInt(maxSlipUps))
+
+      // If keeping streak, restore the slip-up history
+      if (!resetStreak && Object.keys(existingHistory).length > 0) {
+        habitStore.restoreHistory(existingHistory, trackingStartDate)
       }
-      navigation.navigate("Home")  // Navigate back to Home
+
+      navigation.navigate("Home")
     } else {
       alert("Please enter both a habit name and maximum slip-ups per day.")
     }
@@ -50,14 +66,20 @@ export const CreateHabitScreen = ({ navigation, route }: HomeStackScreenProps<"C
         {
           text: "Yes",
           onPress: () => {
-            navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: true })  // Update flags
+            navigation.navigate("CreateHabit", { 
+              hasAcknowledgedStreak: true, 
+              hasSelectedClearHabit: true 
+            })
             saveHabit(true)  // Reset streak
           },
         },
         {
           text: "No",
           onPress: () => {
-            navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: false })  // Update flags
+            navigation.navigate("CreateHabit", { 
+              hasAcknowledgedStreak: true, 
+              hasSelectedClearHabit: false 
+            })
             saveHabit(false)  // Don't reset streak
           },
         },
@@ -102,7 +124,7 @@ export const CreateHabitScreen = ({ navigation, route }: HomeStackScreenProps<"C
         text="Create Habit"
         style={$button}
         textStyle={$buttonText}
-        onPress={handleCreateHabit}  // Handle the creation process
+        onPress={handleCreateHabit}
       />
     </Screen>
   )

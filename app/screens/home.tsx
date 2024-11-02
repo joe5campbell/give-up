@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useState, useRef, useEffect } from "react"
+import React, { FC, useRef } from "react"
 import {
   View,
   Image,
@@ -7,7 +7,6 @@ import {
   ViewStyle,
   TouchableOpacity,
   TextStyle,
-  ScrollView,
   Alert,
 } from "react-native"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
@@ -17,6 +16,7 @@ import { Text, Screen } from "app/components"
 import { colors, spacing } from "../theme"
 import { habitStore } from "app/store/habit-store"
 import { CalendarView } from "app/components/CalendarView"
+import { format, startOfWeek, addDays, isBefore, parseISO } from "date-fns"
 
 const getProgressColors = (slipUps: number, maxSlipUps: number) => {
   if (slipUps === 0) {
@@ -32,43 +32,31 @@ const getProgressColors = (slipUps: number, maxSlipUps: number) => {
   }
 }
 
-// New helper to get current streak dates
-const getCurrentStreakDates = () => {
-  const currentStreak = []
-  for (let i = habitStore.dayStreak.length - 1; i >= 0; i--) {
-    const day = habitStore.dayStreak[i]
-    if (day.slipUpCount > habitStore.maxSlipUps) break
-    currentStreak.unshift(day.date)
-  }
-  return currentStreak
-}
-
-const createWeekArray = (currentStreakDates: string[]) => {
+const createWeekArray = () => {
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-  const today = habitStore.getNextDate()
-  const startOfWeek = new Date(today)
-  const dayOfWeek = today.getDay()
-
-  if (dayOfWeek === 1) {
-    startOfWeek.setDate(today.getDate() - 7)
-  } else {
-    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-    startOfWeek.setDate(today.getDate() + daysToMonday)
-  }
-
-  return days.map((day, index) => {
-    const currentDay = new Date(startOfWeek)
-    currentDay.setDate(startOfWeek.getDate() + index)
-    const dateString = currentDay.toISOString().split('T')[0]
-    const dayData = habitStore.dayStreak.find(
-      (streakDay) => streakDay.date === dateString
-    )
-    const isInCurrentStreak = currentStreakDates.includes(dateString)
-
+  const mondayOfWeek = startOfWeek(habitStore.getEffectiveDate(), { weekStartsOn: 1 })
+  
+  return days.map((letter, index) => {
+    const currentDate = addDays(mondayOfWeek, index)
+    const dateString = format(currentDate, 'yyyy-MM-dd')
+    
+    // Check if the date is before tracking started
+    const isBeforeTracking = isBefore(parseISO(dateString), parseISO(habitStore.trackingStartDate))
+    
+    // Only get data if date is after tracking started
+    const slipUpCount = isBeforeTracking ? 0 : habitStore.getSlipUpsForDate(dateString)
+    const maxSlipUps = isBeforeTracking ? 0 : habitStore.getMaxSlipUpsForDate(dateString)
+    const isInCurrentStreak = !isBeforeTracking && habitStore.isDateInCurrentStreak(dateString)
+    const isPastDay = !isBeforeTracking && habitStore.isDateBeforeToday(dateString)
+    
     return {
-      letter: day,
-      data: dayData || null,
+      letter,
+      date: dateString,
+      slipUpCount,
+      maxSlipUps,
       isInCurrentStreak,
+      shouldShow: isPastDay,
+      isBeforeTracking
     }
   })
 }
@@ -78,91 +66,49 @@ interface HomeScreenProps {
 }
 
 export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ navigation }) {
-  const [slipUps, setSlipUps] = useState(0)
-  const scrollViewRef = useRef<ScrollView>(null)
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
-  const [currentStreakDates, setCurrentStreakDates] = useState<string[]>([])
 
   const handleOpenCalendar = () => {
     bottomSheetModalRef.current?.present()
   }
 
-  useEffect(() => {
-    setCurrentStreakDates(getCurrentStreakDates())
-  }, [habitStore.dayStreak.length])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (scrollViewRef.current && habitStore.dayStreak.length > 0) {
-        scrollViewRef.current.scrollToEnd({ animated: true })
-      }
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [])
-
-  const increaseSlipUps = () => {
-    setSlipUps(slipUps + 1)
-  }
-
-  const addCurrentDayToStreak = () => {
-    habitStore.resetDailySlipUps(slipUps)
-    setSlipUps(0)
-
-    setTimeout(() => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.scrollToEnd({ animated: true })
-      }
-    }, 10)
+  const handleCountSlipUp = () => {
+    habitStore.incrementSlipUpCount()
   }
 
   const handleDeleteHabit = () => {
-    if (habitStore.dayStreak.length > 0) {
+    if (Object.keys(habitStore.slipUpHistory).length > 0) {
       Alert.alert(
-        "Reset Streak?",
-        "You have an existing streak. Do you want to reset it as well?",
+        "Delete Habit?",
+        "This will remove all slip-up history and streak data.",
         [
           {
             text: "Yes",
             onPress: () => {
-              habitStore.hasSeenStreakPrompt = true
-              habitStore.hasSelectedClearHabit = true
-              navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: true })
+              habitStore.clearHabit()
+              navigation.navigate("CreateHabit")
             },
           },
           {
             text: "No",
-            onPress: () => {
-              habitStore.hasSeenStreakPrompt = true
-              habitStore.hasSelectedClearHabit = false
-              navigation.navigate("CreateHabit", { hasAcknowledgedStreak: true, hasSelectedClearHabit: false })
-            },
             style: "cancel",
           },
         ]
       )
     } else {
-      clearHabit(false)
+      habitStore.clearHabit()
       navigation.navigate("CreateHabit")
     }
   }
 
-  const clearHabit = (resetStreak: boolean) => {
-    if (resetStreak) {
-      habitStore.clearStreaks()
-    }
-    habitStore.clearHabit()
-    setSlipUps(0)
-  }
-
-  const fillPercentage = slipUps < habitStore.maxSlipUps
-    ? ((habitStore.maxSlipUps - slipUps) / habitStore.maxSlipUps) * 100
-    : 0
-
+  const currentDate = format(habitStore.getEffectiveDate(), 'yyyy-MM-dd')
+  const currentSlipUps = habitStore.getSlipUpsForDate(currentDate)
   const habitName = habitStore.habitName
   const streakDisplay = habitStore.superStreak > 0
     ? `Super Streak: ${habitStore.superStreak} days`
     : `Current Streak: ${habitStore.streak} days`
+
+  const weekData = createWeekArray()
 
   return (
     <Screen preset="scroll" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
@@ -182,19 +128,31 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           </View>
         </View>
 
+        {habitStore.developmentMode && (
+          <View style={$devModeContainer}>
+            <Text text="Development Mode" style={$devModeText} />
+            <TouchableOpacity 
+              style={$devModeButton} 
+              onPress={() => habitStore.addTestDay()}
+            >
+              <Text text="Add Test Day" style={$devModeButtonText} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={$streakWrapper}>
           <View style={$streakContainer}>
-            {createWeekArray(currentStreakDates).map((day, index) => (
+            {weekData.map((day, index) => (
               <TouchableOpacity key={index} style={$dayCard} onPress={handleOpenCalendar}>
                 <Text text={day.letter} size="xs" style={$dayLetter} />
-                {day.data ? (
+                {day.shouldShow && !day.isBeforeTracking ? (
                   <AnimatedCircularProgress
                     size={30}
-                    width={day.isInCurrentStreak ? 8 : 3}  // Thicker width for current streak
-                    fill={day.data.slipUpCount <= day.data.maxSlipUpsForDay 
-                      ? ((day.data.maxSlipUpsForDay - day.data.slipUpCount) / day.data.maxSlipUpsForDay) * 100 
+                    width={day.isInCurrentStreak ? 8 : 3}
+                    fill={day.slipUpCount <= day.maxSlipUps 
+                      ? ((day.maxSlipUps - day.slipUpCount) / day.maxSlipUps) * 100 
                       : 0}
-                    tintColor={getProgressColors(day.data.slipUpCount, day.data.maxSlipUpsForDay)}
+                    tintColor={getProgressColors(day.slipUpCount, day.maxSlipUps)}
                     backgroundColor={colors.palette.neutral300}
                     rotation={360}
                   />
@@ -207,7 +165,7 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
           <TouchableOpacity onPress={handleOpenCalendar} style={$calendarButton}>
             <MaterialCommunityIcons 
               name="calendar-month" 
-              size={24} 
+              size={20} 
               color={colors.palette.primary600} 
             />
           </TouchableOpacity>
@@ -244,15 +202,17 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
               <AnimatedCircularProgress
                 size={200}
                 width={15}
-                fill={fillPercentage}
+                fill={currentSlipUps <= habitStore.maxSlipUps 
+                  ? ((habitStore.maxSlipUps - currentSlipUps) / habitStore.maxSlipUps) * 100 
+                  : 0}
                 rotation={360}
-                tintColor={getProgressColors(slipUps, habitStore.maxSlipUps)}
+                tintColor={getProgressColors(currentSlipUps, habitStore.maxSlipUps)}
                 backgroundColor={colors.error}
                 style={$circularProgress}
               >
                 {(fill) => (
                   <View style={$circularContent}>
-                    <Text text={`${slipUps}/${habitStore.maxSlipUps}`} size="xl" />
+                    <Text text={`${currentSlipUps}/${habitStore.maxSlipUps}`} size="xl" />
                     <Text text="Slip-ups" size="sm" />
                   </View>
                 )}
@@ -260,14 +220,8 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
             </View>
 
             <View style={$slipUpButtonContainer}>
-              <TouchableOpacity onPress={increaseSlipUps} style={$slipUpButton}>
+              <TouchableOpacity onPress={handleCountSlipUp} style={$slipUpButton}>
                 <Text text={`Count ${habitName}`} size="lg" weight="bold" style={$buttonText} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={$streakButtonContainer}>
-              <TouchableOpacity onPress={addCurrentDayToStreak} style={$streakButton}>
-                <Text text="Add Day to Streak" size="lg" weight="bold" style={$buttonText} />
               </TouchableOpacity>
             </View>
           </View>
@@ -275,12 +229,38 @@ export const HomeScreen: FC<HomeScreenProps> = observer(function HomeScreen({ na
 
         <CalendarView 
           bottomSheetModalRef={bottomSheetModalRef}
-          streakData={habitStore.dayStreak}
         />
       </BottomSheetModalProvider>
     </Screen>
   )
 })
+
+// All your existing styles remain the same, just add:
+const $devModeContainer: ViewStyle = {
+  backgroundColor: colors.palette.neutral200,
+  padding: spacing.xs,
+  borderRadius: spacing.sm,
+  marginBottom: spacing.sm,
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+}
+
+const $devModeText: TextStyle = {
+  color: colors.palette.neutral600,
+  fontStyle: "italic",
+}
+
+const $devModeButton: ViewStyle = {
+  backgroundColor: colors.palette.neutral300,
+  padding: spacing.xs,
+  borderRadius: spacing.xs,
+}
+
+const $devModeButtonText: TextStyle = {
+  color: colors.palette.neutral700,
+  fontSize: 12,
+}
 
 const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
@@ -339,6 +319,12 @@ const $circularContent: ViewStyle = {
   alignItems: "center",
 }
 
+const $placeholderCircle: ViewStyle = {
+  width: 30,
+  height: 30,
+  opacity: 0,
+}
+
 const $slipUpButtonContainer: ViewStyle = {
   marginTop: spacing.md,
   justifyContent: "center",
@@ -346,19 +332,6 @@ const $slipUpButtonContainer: ViewStyle = {
 }
 
 const $slipUpButton: ViewStyle = {
-  backgroundColor: colors.palette.primary600,
-  paddingVertical: spacing.md,
-  paddingHorizontal: spacing.xxl,
-  borderRadius: spacing.sm,
-}
-
-const $streakButtonContainer: ViewStyle = {
-  marginTop: spacing.md,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $streakButton: ViewStyle = {
   backgroundColor: colors.palette.primary600,
   paddingVertical: spacing.md,
   paddingHorizontal: spacing.xxl,
@@ -420,10 +393,4 @@ const $buttonText: TextStyle = {
 const $calendarButton: ViewStyle = {
   padding: spacing.xxxs,
   marginLeft: spacing.xs,
-}
-
-const $placeholderCircle: ViewStyle = {
-  width: 30,
-  height: 30,
-  opacity: 0,
 }
